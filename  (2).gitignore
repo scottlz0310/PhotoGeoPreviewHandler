@@ -1,0 +1,20 @@
+## Visual Studio
+.vs/
+bin/
+obj/
+Debug*/
+Release*/
+*.user
+*.suo
+*.userosscache
+*.userprefs
+
+# Rider
+.idea/
+
+# NuGet
+*.nupkg
+packages/
+
+# Build results
+*.log

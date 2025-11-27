@@ -1,0 +1,4 @@
+# Ensure consistent line endings
+* text=auto
+*.cs text eol=crlf
+*.xaml text eol=crlf		

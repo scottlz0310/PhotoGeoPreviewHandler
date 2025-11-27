@@ -1,0 +1,8 @@
+ssh -T git@github.com
+.\scripts\git-pull.sh
+•git remote -v
+git remote -v
+.\scripts\git-pull.sh
+.\scripts\git-pull.ps1
+ls .\scripts\
+code .
