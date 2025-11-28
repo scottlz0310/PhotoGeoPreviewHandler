@@ -1,36 +1,204 @@
-# アーキテクチャ概要
+# アーキテクチャ設計書 (C++/WinRT + WebView2)
 
-コンポーネント図（概念）:
-- PreviewHandler (COM) — IPreviewHandler 準拠
-  - 初期化: 受け取った IStream をメモリに読み込む
-  - UI ホスト: WPF UserControl を PreviewPane に表示
+## 概要
+PowerToys をフォークし、**C++/WinRT + WebView2 + HTML** で `PhotoGeoPreview` を実装する。
+PowerToys の既存 Preview Handler（Markdown, SVG）と同じパターンに準拠し、単一の WebView2 内で全 UI を完結させる。
 
-- PreviewHandlerControl (WPF)
-  - ImagePreview（上部）
-  - GridSplitter（中央）
-  - MapContainer（下部、WebView2）
+## プロジェクト構造（PowerToys 内）
 
-- ExifDataExtractor
-  - 画像ストリームから EXIF を解析し GpsCoordinate を返す
+```
+PowerToys/
+├── src/
+│   └── modules/
+│       └── previewpane/
+│           ├── MarkdownPreviewHandler/      # 既存（参考）- C++
+│           ├── SvgPreviewHandler/           # 既存（参考）- C++
+│           ├── PhotoGeoPreview/             # 新規追加 - C++
+│           │   ├── PhotoGeoPreview.vcxproj
+│           │   ├── PhotoGeoPreviewHandler.h
+│           │   ├── PhotoGeoPreviewHandler.cpp
+│           │   ├── module.def
+│           │   └── Resources/
+│           │       ├── template.html        # HTML テンプレート
+│           │       ├── styles.css
+│           │       ├── map.js               # Leaflet 初期化
+│           │       ├── splitter.js          # スプリッター処理
+│           │       └── leaflet/             # オフライン fallback
+│           │           ├── leaflet.js
+│           │           └── leaflet.css
+│           └── common/
+│               └── (共通ヘルパー)
+└── installer/
+    └── PowerToysSetup/
+        └── preview_handlers.json            # 登録情報追加
+```
 
-- MapHtmlGenerator
-  - Leaflet HTML を生成し、渡された座標（null可）に基づいてマップ表示ロジックを埋め込む
+## コンポーネント構成
 
-データフロー:
-1. Explorer がファイルをプレビュー要求 → COM ハンドラへストリーム供給
-2. ハンドラがストリームを非同期で読み込み、画像バイナリと EXIF を解析
-3. UI に画像をバインドし、MapHTML を WebView2 に注入
-4. 地図は JS 内で座標を受け取り、マーカー・ズームを行う
+### 1. COM Preview Handler (C++/WinRT)
 
-エラーハンドリング方針:
-- UIはなるべく壊さず、画面内に情報ラベルやシンプルなメッセージを表示
-- 重大エラーはログに出力（軽量トレース）
-- HEIC 等の未対応フォーマットはユーザー向けメッセージを表示
+**PhotoGeoPreviewHandler.h/.cpp**:
+```cpp
+class PhotoGeoPreviewHandler : public IPreviewHandler,
+                                public IInitializeWithFile,
+                                public IPreviewHandlerVisuals
+{
+private:
+    HWND m_hwndParent;
+    HWND m_hwndPreview;
+    wil::com_ptr<ICoreWebView2Controller> m_webviewController;
+    wil::com_ptr<ICoreWebView2> m_webview;
 
-拡張ポイント:
-- 逆ジオコーディングは MapHtml へオプションで統合可能
-- OSM タイルプロバイダの切替（設定ファイル or コンパイル時）
+public:
+    HRESULT SetWindow(HWND hwnd, const RECT* prc);
+    HRESULT DoPreview();
+    // EXIF 抽出 + HTML 生成 + WebView2 表示
+};
+```
 
-セキュリティ注意:
-- WebView2 に注入する HTML はローカル生成し、外部スクリプトの読み込みは最小限にする
-- 必要な場合は Content-Security-Policy を検討
+### 2. UI Layer (HTML/CSS/JS)
+
+**単一の WebView2** 内で全 UI を実装：
+
+#### HTML 構造 (`template.html`)
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+</head>
+<body>
+  <div class="split-container">
+    <!-- 画像ペイン -->
+    <div class="image-pane" id="imagePane">
+      <img id="photo" src="{IMAGE_PATH}">
+    </div>
+
+    <!-- リサイズ可能なスプリッター -->
+    <div class="splitter" id="splitter"></div>
+
+    <!-- 地図ペイン -->
+    <div class="map-pane" id="mapPane"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // 地図初期化
+    const map = L.map('mapPane').setView([{LAT}, {LON}], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.marker([{LAT}, {LON}]).addTo(map);
+
+    // スプリッターのドラッグ処理
+    const splitter = document.getElementById('splitter');
+    let isDragging = false;
+
+    splitter.addEventListener('mousedown', () => isDragging = true);
+    document.addEventListener('mouseup', () => isDragging = false);
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const container = document.querySelector('.split-container');
+        const imagePane = document.getElementById('imagePane');
+        const percentage = (e.clientY / container.clientHeight) * 100;
+        imagePane.style.height = `${percentage}%`;
+      }
+    });
+  </script>
+</body>
+</html>
+```
+
+#### CSS (`styles.css`)
+```css
+.split-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.image-pane {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.splitter {
+  height: 5px;
+  background: #ccc;
+  cursor: ns-resize;
+}
+
+.map-pane {
+  flex: 1;
+}
+```
+
+### 3. Logic Layer (C++)
+
+#### EXIF 抽出 (WIC)
+```cpp
+HRESULT ExtractGPSFromImage(LPCWSTR filePath, double& lat, double& lon)
+{
+    IWICImagingFactory* factory;
+    CoCreateInstance(CLSID_WICImagingFactory, ...);
+
+    IWICBitmapDecoder* decoder;
+    factory->CreateDecoderFromFilename(filePath, ...);
+
+    IWICMetadataQueryReader* reader;
+    decoder->GetFrame(0)->GetMetadataQueryReader(&reader);
+
+    // GPS 座標を読み取り
+    PROPVARIANT value;
+    reader->GetMetadataByName(L"/app1/ifd/gps/{ushort=2}", &value);
+    // 緯度経度に変換
+}
+```
+
+#### HTML 生成と一時ファイル
+```cpp
+std::wstring GenerateHTML(const std::wstring& imagePath, double lat, double lon)
+{
+    std::wstring html = LoadTemplate(L"Resources/template.html");
+
+    // URI エスケープ（日本語・空白対応）
+    std::wstring escapedPath = UriEscape(imagePath);
+
+    ReplaceAll(html, L"{IMAGE_PATH}", escapedPath);
+    ReplaceAll(html, L"{LAT}", std::to_wstring(lat));
+    ReplaceAll(html, L"{LON}", std::to_wstring(lon));
+
+    // 一時ファイルに書き出し（PowerToys 標準パターン）
+    std::wstring tempPath = GetTempHtmlPath();
+    WriteFile(tempPath, html);
+
+    return tempPath;
+}
+
+// WebView2 で読み込み
+std::wstring tempHtmlPath = GenerateHTML(imagePath, lat, lon);
+m_webview->Navigate(L"file:///" + tempHtmlPath);
+```
+
+## データフロー
+1. ユーザーが Explorer で画像を選択
+2. PowerToys Runner が `PhotoGeoPreviewHandler` を起動
+3. `IInitializeWithFile::Initialize()` でファイルパスを受け取る
+4. `DoPreview()` で：
+   - WIC で EXIF GPS を抽出
+   - GPS データの有無を確認
+   - HTML テンプレートに画像パス（URI エスケープ済み）・座標を埋め込み
+   - 一時ファイルに HTML を書き出し
+   - WebView2 を初期化し `Navigate(file:///temp.html)` で表示
+5. HTML 内の JS で：
+   - Leaflet 地図を初期化（CDN → ローカル fallback）
+   - スプリッターを有効化
+
+## 技術的利点
+- ✅ PowerToys の標準構造（C++/WinRT）に完全準拠
+- ✅ WebView2 単一で UI 完結（XAML 不要）
+- ✅ HTML/CSS/JS による柔軟な UI 実装
+- ✅ WIC による高速 EXIF 抽出
+- ✅ 既存 Preview Handler と同じ管理方法
