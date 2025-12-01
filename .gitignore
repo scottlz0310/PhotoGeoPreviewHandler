@@ -133,3 +133,22 @@ logs/
 # Project-specific
 nuget.exe
 reference/
+
+# Auto-generated entries from templates
+*.DotSettings.user
+*.aps
+*.cache
+*.coverage
+*.coveragexml
+*.ilk
+*.obj
+*.opencover.xml
+*.pch
+*.pdb
+*.sln.docstates
+*.tlog
+.vscode/
+AppPackages/
+BundleArtifacts/
+_ReSharper*/
+publish/
