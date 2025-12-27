@@ -1,0 +1,58 @@
+<Window
+    x:Class="PhotoGeoExplorer.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="PhotoGeoExplorer">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <MenuBar>
+            <MenuBarItem Title="File" />
+            <MenuBarItem Title="View" />
+            <MenuBarItem Title="Settings" />
+            <MenuBarItem Title="Help" />
+        </MenuBar>
+
+        <Grid Grid.Row="1" ColumnDefinitions="2*,Auto,3*" RowDefinitions="*">
+            <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,*" Padding="12">
+                <TextBlock Text="File Browser" FontSize="20" FontWeight="SemiBold" />
+                <CommandBar Margin="0,8,0,0">
+                    <AppBarButton Icon="Back" ToolTipService.ToolTip="Back" />
+                    <AppBarButton Icon="Forward" ToolTipService.ToolTip="Forward" />
+                    <AppBarButton Icon="Up" ToolTipService.ToolTip="Up" />
+                    <AppBarButton Icon="Refresh" ToolTipService.ToolTip="Refresh" />
+                    <AppBarButton Icon="Home" ToolTipService.ToolTip="Home" />
+                </CommandBar>
+                <BreadcrumbBar Margin="0,8,0,0" />
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                    <TextBox PlaceholderText="Search files..." Width="240" />
+                    <Button Content="Filters" />
+                </StackPanel>
+                <CheckBox Content="Show images only" Margin="0,8,0,0" />
+                <ListView Margin="0,8,0,0" />
+            </Grid>
+
+            <Grid Grid.Column="2" RowDefinitions="*,Auto,*" Padding="12">
+                <Grid Row="0" RowDefinitions="Auto,*">
+                    <TextBlock Text="Image Preview" FontSize="20" FontWeight="SemiBold" />
+                    <Border Grid.Row="1" Margin="0,8,0,0" Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="6" />
+                </Grid>
+
+                <Grid Grid.Row="2" RowDefinitions="Auto,*">
+                    <TextBlock Text="Map" FontSize="20" FontWeight="SemiBold" />
+                    <Grid Grid.Row="1" Margin="0,8,0,0">
+                        <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="6" />
+                        <WebView2 x:Name="MapWebView" />
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
+

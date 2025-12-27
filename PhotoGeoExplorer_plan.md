@@ -26,6 +26,10 @@
 ## 3. 開発環境整備
 
 - **IDE**：Visual Studio 2026 (最新アップデート適用)
+  - Microsoft Visual Studio Community
+  - 2025年12月 機能更新プログラム
+  - チャネル:  Stable
+  - Version: 18.1.1
 - **ワークロード**：
   - .NET Desktop Development
   - Windows App SDK

@@ -1,0 +1,28 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build outputs
+**/bin/
+**/obj/
+**/AppPackages/
+**/BundleArtifacts/
+**/AppxPackages/
+**/*.appx
+**/*.msix
+**/*.appxbundle
+**/*.msixbundle
+**/*.appxsym
+**/*.msixsym
+**/*.pdb
+
+# NuGet
+**/packages/
+*.nupkg
+*.snupkg
+
+# Logs
+*.log
