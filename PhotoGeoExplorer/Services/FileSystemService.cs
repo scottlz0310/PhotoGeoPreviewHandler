@@ -32,7 +32,21 @@ internal sealed class FileSystemService
 
     private List<PhotoItem> EnumerateFiles(string folderPath, bool imagesOnly, string? searchText)
     {
-        var items = new List<PhotoItem>();
+        var directories = new List<PhotoItem>();
+        var files = new List<PhotoItem>();
+
+        foreach (var path in Directory.EnumerateDirectories(folderPath))
+        {
+            var directoryName = Path.GetFileName(path);
+            if (searchText is not null
+                && !directoryName.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var info = new DirectoryInfo(path);
+            directories.Add(new PhotoItem(info.FullName, 0, info.LastWriteTime, isFolder: true));
+        }
 
         foreach (var path in Directory.EnumerateFiles(folderPath))
         {
@@ -57,17 +71,60 @@ internal sealed class FileSystemService
                 thumbnailPath = ThumbnailService.GetOrCreateThumbnailPath(info.FullName, info.LastWriteTimeUtc);
             }
 
-            items.Add(new PhotoItem(info.FullName, info.Length, info.LastWriteTime, thumbnailPath));
+            files.Add(new PhotoItem(info.FullName, info.Length, info.LastWriteTime, isFolder: false, thumbnailPath));
         }
 
-        return items
-            .OrderBy(item => item.FileName, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        directories.Sort((left, right) => string.Compare(left.FileName, right.FileName, StringComparison.OrdinalIgnoreCase));
+        files.Sort((left, right) => string.Compare(left.FileName, right.FileName, StringComparison.OrdinalIgnoreCase));
+
+        var items = new List<PhotoItem>(directories.Count + files.Count);
+        items.AddRange(directories);
+        items.AddRange(files);
+        return items;
     }
 
     private bool IsImage(string path)
     {
         var extension = Path.GetExtension(path);
         return _imageExtensions.Contains(extension);
+    }
+
+    public static List<BreadcrumbChild> GetChildDirectories(string folderPath)
+    {
+        ArgumentNullException.ThrowIfNull(folderPath);
+
+        var children = new List<BreadcrumbChild>();
+        try
+        {
+            foreach (var path in Directory.EnumerateDirectories(folderPath))
+            {
+                var name = Path.GetFileName(path);
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    continue;
+                }
+
+                children.Add(new BreadcrumbChild(name, path));
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            AppLog.Error($"Failed to read child folders: {folderPath}", ex);
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            AppLog.Error($"Failed to read child folders: {folderPath}", ex);
+        }
+        catch (PathTooLongException ex)
+        {
+            AppLog.Error($"Failed to read child folders: {folderPath}", ex);
+        }
+        catch (IOException ex)
+        {
+            AppLog.Error($"Failed to read child folders: {folderPath}", ex);
+        }
+
+        children.Sort((left, right) => string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase));
+        return children;
     }
 }

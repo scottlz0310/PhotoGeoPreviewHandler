@@ -21,12 +21,12 @@
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="3*" />
+                <ColumnDefinition x:Name="FileBrowserColumn" Width="2*" />
+                <ColumnDefinition x:Name="SplitterColumn" Width="Auto" />
+                <ColumnDefinition x:Name="DetailColumn" Width="3*" />
             </Grid.ColumnDefinitions>
 
-            <Grid Grid.Column="0" Padding="12">
+            <Grid x:Name="FileBrowserPane" Grid.Column="0" Padding="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -50,7 +50,16 @@
                     ItemClicked="OnBreadcrumbItemClicked">
                     <BreadcrumbBar.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Title}" />
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="{Binding Title}" />
+                                <Button
+                                    Content="v"
+                                    Padding="4,0"
+                                    MinWidth="24"
+                                    IsEnabled="{Binding HasChildren}"
+                                    Tag="{Binding}"
+                                    Click="OnBreadcrumbDropDownClicked" />
+                            </StackPanel>
                         </DataTemplate>
                     </BreadcrumbBar.ItemTemplate>
                 </BreadcrumbBar>
@@ -74,7 +83,9 @@
                     <ListView
                         ItemsSource="{Binding Items}"
                         SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                        SelectionMode="Single">
+                        SelectionMode="Single"
+                        IsItemClickEnabled="True"
+                        ItemClick="OnFileItemClicked">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -83,7 +94,20 @@
                                         Height="72"
                                         CornerRadius="6"
                                         Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
-                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                                        <Grid>
+                                            <Image
+                                                Source="{Binding Thumbnail}"
+                                                Stretch="UniformToFill"
+                                                Visibility="{Binding ThumbnailVisibility}" />
+                                            <FontIcon
+                                                Glyph="&#xE8B7;"
+                                                FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                                Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                                FontSize="24"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Visibility="{Binding FolderIconVisibility}" />
+                                        </Grid>
                                     </Border>
                                     <StackPanel Spacing="2" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding FileName}" />
@@ -106,11 +130,11 @@
                 </Grid>
             </Grid>
 
-            <Grid Grid.Column="2" Padding="12">
+            <Grid x:Name="DetailPane" Grid.Column="2" Padding="12">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
+                    <RowDefinition x:Name="PreviewRow" Height="*" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition x:Name="MapRow" Height="*" />
                 </Grid.RowDefinitions>
 
                 <Grid Grid.Row="0">
@@ -118,33 +142,78 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0" Spacing="2">
-                        <TextBlock Text="Image Preview" FontSize="20" FontWeight="SemiBold" />
-                        <TextBlock
-                            Text="{Binding MetadataSummary}"
-                            Visibility="{Binding MetadataVisibility}"
-                            Opacity="0.7"
-                            FontSize="12" />
-                    </StackPanel>
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Image Preview" FontSize="20" FontWeight="SemiBold" />
+                            <TextBlock
+                                Text="{Binding MetadataSummary}"
+                                Visibility="{Binding MetadataVisibility}"
+                                Opacity="0.7"
+                                FontSize="12" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Button Click="OnPreviewFitClicked" ToolTipService.ToolTip="ウィンドウに合わせる">
+                                <SymbolIcon Symbol="View" />
+                            </Button>
+                            <Button Click="OnPreviewZoomInClicked" ToolTipService.ToolTip="拡大">
+                                <SymbolIcon Symbol="ZoomIn" />
+                            </Button>
+                            <Button Click="OnPreviewZoomOutClicked" ToolTipService.ToolTip="縮小">
+                                <SymbolIcon Symbol="ZoomOut" />
+                            </Button>
+                            <ToggleButton
+                                Checked="OnPreviewMaximizeChecked"
+                                Unchecked="OnPreviewMaximizeUnchecked"
+                                ToolTipService.ToolTip="最大化">
+                                <SymbolIcon Symbol="FullScreen" />
+                            </ToggleButton>
+                            <Button Click="OnPreviewPreviousClicked" ToolTipService.ToolTip="前の画像">
+                                <SymbolIcon Symbol="Back" />
+                            </Button>
+                            <Button Click="OnPreviewNextClicked" ToolTipService.ToolTip="次の画像">
+                                <SymbolIcon Symbol="Forward" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
                     <Border
                         Grid.Row="1"
                         Margin="0,8,0,0"
                         Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         CornerRadius="6">
                         <Grid>
-                            <Image Source="{Binding SelectedPreview}" Stretch="Uniform" />
+                            <ScrollViewer
+                                x:Name="PreviewScrollViewer"
+                                ZoomMode="Enabled"
+                                MinZoomFactor="0.1"
+                                MaxZoomFactor="6"
+                                HorizontalScrollMode="Auto"
+                                VerticalScrollMode="Auto"
+                                HorizontalScrollBarVisibility="Auto"
+                                VerticalScrollBarVisibility="Auto"
+                                SizeChanged="OnPreviewScrollViewerSizeChanged">
+                                <Image
+                                    x:Name="PreviewImage"
+                                    Source="{Binding SelectedPreview}"
+                                    Stretch="Uniform"
+                                    ImageOpened="OnPreviewImageOpened" />
+                            </ScrollViewer>
                             <TextBlock
                                 Text="Select a photo to preview."
                                 Visibility="{Binding PreviewPlaceholderVisibility}"
                                 Foreground="{ThemeResource SystemFillColorCautionBrush}"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
+                                IsHitTestVisible="False"
                                 TextWrapping="Wrap" />
                         </Grid>
                     </Border>
                 </Grid>
 
-                <Grid Grid.Row="2">
+                <Grid x:Name="MapPane" Grid.Row="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />

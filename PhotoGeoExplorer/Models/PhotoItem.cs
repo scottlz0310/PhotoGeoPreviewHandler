@@ -6,12 +6,13 @@ namespace PhotoGeoExplorer.Models;
 
 internal sealed class PhotoItem
 {
-    public PhotoItem(string filePath, long sizeBytes, DateTimeOffset modifiedAt, string? thumbnailPath = null)
+    public PhotoItem(string filePath, long sizeBytes, DateTimeOffset modifiedAt, bool isFolder, string? thumbnailPath = null)
     {
         FilePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
         FileName = Path.GetFileName(filePath);
         SizeBytes = sizeBytes;
         ModifiedAt = modifiedAt;
+        IsFolder = isFolder;
         ThumbnailPath = thumbnailPath;
     }
 
@@ -19,9 +20,10 @@ internal sealed class PhotoItem
     public string FileName { get; }
     public long SizeBytes { get; }
     public DateTimeOffset ModifiedAt { get; }
+    public bool IsFolder { get; }
     public string? ThumbnailPath { get; }
 
-    public string SizeText => FormatSize(SizeBytes);
+    public string SizeText => IsFolder ? string.Empty : FormatSize(SizeBytes);
     public string ModifiedAtText => ModifiedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture);
 
     private static string FormatSize(long sizeBytes)

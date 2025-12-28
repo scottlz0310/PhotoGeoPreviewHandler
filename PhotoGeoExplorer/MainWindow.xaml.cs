@@ -7,6 +7,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Imaging;
 using PhotoGeoExplorer.Models;
 using PhotoGeoExplorer.Services;
 using PhotoGeoExplorer.ViewModels;
@@ -25,10 +26,17 @@ namespace PhotoGeoExplorer;
 public sealed partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
+    private bool _layoutStored;
     private bool _mapReady;
     private bool _mapInitialized;
     private WebView2? _mapWebView;
+    private bool _previewFitToWindow = true;
+    private bool _previewMaximized;
     private bool _windowSized;
+    private GridLength _storedDetailWidth;
+    private GridLength _storedFileBrowserWidth;
+    private GridLength _storedMapRowHeight;
+    private GridLength _storedSplitterWidth;
 
     public MainWindow()
     {
@@ -163,7 +171,7 @@ public sealed partial class MainWindow : Window
         }
 
         var selectedItem = _viewModel.SelectedItem;
-        if (selectedItem is null)
+        if (selectedItem is null || selectedItem.IsFolder)
         {
             await SetMapMarkersAsync("[]").ConfigureAwait(true);
             ShowMapStatus("Select a photo to show location.");
@@ -249,6 +257,137 @@ public sealed partial class MainWindow : Window
         return false;
     }
 
+    private void OnPreviewImageOpened(object sender, RoutedEventArgs e)
+    {
+        _previewFitToWindow = true;
+        ApplyPreviewFit();
+    }
+
+    private void OnPreviewScrollViewerSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (_previewFitToWindow)
+        {
+            ApplyPreviewFit();
+        }
+    }
+
+    private void OnPreviewFitClicked(object sender, RoutedEventArgs e)
+    {
+        _previewFitToWindow = true;
+        ApplyPreviewFit();
+    }
+
+    private void OnPreviewZoomInClicked(object sender, RoutedEventArgs e)
+    {
+        _previewFitToWindow = false;
+        AdjustPreviewZoom(1.2f);
+    }
+
+    private void OnPreviewZoomOutClicked(object sender, RoutedEventArgs e)
+    {
+        _previewFitToWindow = false;
+        AdjustPreviewZoom(1f / 1.2f);
+    }
+
+    private void OnPreviewMaximizeChecked(object sender, RoutedEventArgs e)
+    {
+        TogglePreviewMaximize(true);
+    }
+
+    private void OnPreviewMaximizeUnchecked(object sender, RoutedEventArgs e)
+    {
+        TogglePreviewMaximize(false);
+    }
+
+    private void OnPreviewNextClicked(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SelectNext();
+    }
+
+    private void OnPreviewPreviousClicked(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SelectPrevious();
+    }
+
+    private void AdjustPreviewZoom(float multiplier)
+    {
+        if (PreviewScrollViewer is null)
+        {
+            return;
+        }
+
+        var current = PreviewScrollViewer.ZoomFactor;
+        var target = current * multiplier;
+        var clamped = Math.Clamp(target, PreviewScrollViewer.MinZoomFactor, PreviewScrollViewer.MaxZoomFactor);
+        PreviewScrollViewer.ChangeView(null, null, clamped, true);
+    }
+
+    private void ApplyPreviewFit()
+    {
+        if (PreviewScrollViewer is null || PreviewImage?.Source is not BitmapImage bitmap)
+        {
+            return;
+        }
+
+        if (bitmap.PixelWidth == 0 || bitmap.PixelHeight == 0)
+        {
+            return;
+        }
+
+        var viewportWidth = PreviewScrollViewer.ViewportWidth;
+        var viewportHeight = PreviewScrollViewer.ViewportHeight;
+        if (viewportWidth <= 0 || viewportHeight <= 0)
+        {
+            return;
+        }
+
+        var scaleX = viewportWidth / bitmap.PixelWidth;
+        var scaleY = viewportHeight / bitmap.PixelHeight;
+        var target = (float)Math.Min(scaleX, scaleY);
+        var clamped = Math.Clamp(target, PreviewScrollViewer.MinZoomFactor, PreviewScrollViewer.MaxZoomFactor);
+        PreviewScrollViewer.ChangeView(0, 0, clamped, true);
+    }
+
+    private void TogglePreviewMaximize(bool maximize)
+    {
+        if (maximize == _previewMaximized)
+        {
+            return;
+        }
+
+        if (!_layoutStored)
+        {
+            _storedFileBrowserWidth = FileBrowserColumn.Width;
+            _storedSplitterWidth = SplitterColumn.Width;
+            _storedDetailWidth = DetailColumn.Width;
+            _storedMapRowHeight = MapRow.Height;
+            _layoutStored = true;
+        }
+
+        _previewMaximized = maximize;
+        if (maximize)
+        {
+            FileBrowserColumn.Width = new GridLength(0);
+            SplitterColumn.Width = new GridLength(0);
+            DetailColumn.Width = new GridLength(1, GridUnitType.Star);
+            MapRow.Height = new GridLength(0);
+            FileBrowserPane.Visibility = Visibility.Collapsed;
+            MapPane.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            FileBrowserColumn.Width = _storedFileBrowserWidth;
+            SplitterColumn.Width = _storedSplitterWidth;
+            DetailColumn.Width = _storedDetailWidth;
+            MapRow.Height = _storedMapRowHeight;
+            FileBrowserPane.Visibility = Visibility.Visible;
+            MapPane.Visibility = Visibility.Visible;
+        }
+
+        _previewFitToWindow = true;
+        ApplyPreviewFit();
+    }
+
     private async void OnNavigateHomeClicked(object sender, RoutedEventArgs e)
     {
         await _viewModel.OpenHomeAsync().ConfigureAwait(true);
@@ -317,6 +456,56 @@ public sealed partial class MainWindow : Window
         }
 
         await _viewModel.LoadFolderAsync(segment.FullPath).ConfigureAwait(true);
+    }
+
+    private void OnBreadcrumbDropDownClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not BreadcrumbSegment segment)
+        {
+            return;
+        }
+
+        if (segment.Children.Count == 0)
+        {
+            return;
+        }
+
+        var flyout = new MenuFlyout();
+        foreach (var child in segment.Children)
+        {
+            var item = new MenuFlyoutItem
+            {
+                Text = child.Name,
+                Tag = child.FullPath
+            };
+            item.Click += OnBreadcrumbChildClicked;
+            flyout.Items.Add(item);
+        }
+
+        flyout.ShowAt(button);
+    }
+
+    private async void OnBreadcrumbChildClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuFlyoutItem item || item.Tag is not string folderPath)
+        {
+            return;
+        }
+
+        await _viewModel.LoadFolderAsync(folderPath).ConfigureAwait(true);
+    }
+
+    private async void OnFileItemClicked(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is not PhotoListItem item)
+        {
+            return;
+        }
+
+        if (item.IsFolder)
+        {
+            await _viewModel.LoadFolderAsync(item.FilePath).ConfigureAwait(true);
+        }
     }
 
     private async void OnSearchKeyDown(object sender, KeyRoutedEventArgs e)

@@ -157,6 +157,16 @@ internal sealed class MainViewModel : BindableBase
         await LoadFolderAsync(CurrentFolderPath).ConfigureAwait(true);
     }
 
+    public void SelectNext()
+    {
+        SelectRelative(1);
+    }
+
+    public void SelectPrevious()
+    {
+        SelectRelative(-1);
+    }
+
     public async Task LoadFolderAsync(string folderPath)
     {
         if (string.IsNullOrWhiteSpace(folderPath))
@@ -249,7 +259,7 @@ internal sealed class MainViewModel : BindableBase
 
     private void UpdatePreview(PhotoListItem? item)
     {
-        if (item is null)
+        if (item is null || item.IsFolder)
         {
             SelectedPreview = null;
             PreviewPlaceholderVisibility = Visibility.Visible;
@@ -285,7 +295,7 @@ internal sealed class MainViewModel : BindableBase
             previousCts.Dispose();
         }
 
-        if (item is null)
+        if (item is null || item.IsFolder)
         {
             SelectedMetadata = null;
             SetMetadataSummary(null, hasSelection: false);
@@ -327,7 +337,7 @@ internal sealed class MainViewModel : BindableBase
 
         var trimmedRoot = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var currentPath = root;
-        BreadcrumbItems.Add(new BreadcrumbSegment(trimmedRoot, root));
+        BreadcrumbItems.Add(new BreadcrumbSegment(trimmedRoot, root, FileSystemService.GetChildDirectories(root)));
 
         var remaining = folderPath[root.Length..];
         if (string.IsNullOrWhiteSpace(remaining))
@@ -339,7 +349,7 @@ internal sealed class MainViewModel : BindableBase
         foreach (var segment in segments)
         {
             currentPath = Path.Combine(currentPath, segment);
-            BreadcrumbItems.Add(new BreadcrumbSegment(segment, currentPath));
+            BreadcrumbItems.Add(new BreadcrumbSegment(segment, currentPath, FileSystemService.GetChildDirectories(currentPath)));
         }
     }
 
@@ -347,6 +357,28 @@ internal sealed class MainViewModel : BindableBase
     {
         StatusMessage = message;
         StatusVisibility = string.IsNullOrWhiteSpace(message) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void SelectRelative(int delta)
+    {
+        if (Items.Count == 0)
+        {
+            return;
+        }
+
+        var currentIndex = SelectedItem is null ? (delta > 0 ? -1 : Items.Count) : Items.IndexOf(SelectedItem);
+        var step = delta > 0 ? 1 : -1;
+        var targetIndex = currentIndex + step;
+        while (targetIndex >= 0 && targetIndex < Items.Count)
+        {
+            if (!Items[targetIndex].IsFolder)
+            {
+                SelectedItem = Items[targetIndex];
+                return;
+            }
+
+            targetIndex += step;
+        }
     }
 
     private void SetMetadataSummary(PhotoMetadata? metadata, bool hasSelection)

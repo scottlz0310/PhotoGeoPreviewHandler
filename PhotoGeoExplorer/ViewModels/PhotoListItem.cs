@@ -1,4 +1,5 @@
 using System;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
 using PhotoGeoExplorer.Models;
 
@@ -17,5 +18,8 @@ internal sealed class PhotoListItem
     public string FileName => Item.FileName;
     public string SizeText => Item.SizeText;
     public string ModifiedAtText => Item.ModifiedAtText;
+    public bool IsFolder => Item.IsFolder;
     public BitmapImage? Thumbnail { get; }
+    public Visibility ThumbnailVisibility => IsFolder ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility FolderIconVisibility => IsFolder ? Visibility.Visible : Visibility.Collapsed;
 }
