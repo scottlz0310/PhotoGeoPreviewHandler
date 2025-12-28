@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
+using BruTile.Cache;
 using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Projections;
@@ -111,7 +112,19 @@ public sealed partial class MainWindow : Window
         try
         {
             var map = new Map();
-            var tileLayer = OpenStreetMap.CreateTileLayer();
+            var cacheRoot = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "PhotoGeoExplorer",
+                "Cache",
+                "Tiles");
+            Directory.CreateDirectory(cacheRoot);
+            var persistentCache = new FileCache(cacheRoot, "png");
+            const string userAgent = "PhotoGeoExplorer/0.1.0 (scott.lz0310@gmail.com)";
+            var tileLayer = OpenStreetMap.CreateTileLayer(userAgent);
+            if (tileLayer.TileSource is BruTile.Web.HttpTileSource httpTileSource)
+            {
+                httpTileSource.PersistentCache = persistentCache;
+            }
             _baseTileLayer = tileLayer;
             map.Layers.Add(tileLayer);
 

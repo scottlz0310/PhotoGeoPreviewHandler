@@ -27,8 +27,8 @@
 - [x] WebView2 初期化失敗時のフォールバック
 - [x] Mapsui へ地図表示を移行
 - [x] Mapsui のマーカー表示を実装
-- [ ] Mapsui 向けタイルキャッシュの再実装
-- [ ] WebView2 資産（wwwroot/TileCacheService）の整理
+- [x] Mapsui 向けタイルキャッシュの再実装
+- [x] WebView2 資産（wwwroot/TileCacheService）の整理
 
 ## Phase 4: UI/UX 仕上げ（低〜中難易度）
 - [ ] ステータスバー/通知
