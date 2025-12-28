@@ -20,6 +20,7 @@ using PhotoGeoExplorer.Services;
 using PhotoGeoExplorer.ViewModels;
 using System.ComponentModel;
 using Windows.Graphics;
+using Windows.Foundation;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.System;
@@ -44,6 +45,10 @@ public sealed partial class MainWindow : Window
     private GridLength _storedMapRowHeight;
     private GridLength _storedMapSplitterHeight;
     private GridLength _storedSplitterWidth;
+    private bool _previewDragging;
+    private Point _previewDragStart;
+    private double _previewStartHorizontalOffset;
+    private double _previewStartVerticalOffset;
 
     public MainWindow()
     {
@@ -376,6 +381,96 @@ public sealed partial class MainWindow : Window
         var target = current * multiplier;
         var clamped = Math.Clamp(target, PreviewScrollViewer.MinZoomFactor, PreviewScrollViewer.MaxZoomFactor);
         PreviewScrollViewer.ChangeView(null, null, clamped, true);
+    }
+
+    private void OnPreviewPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        if (PreviewScrollViewer is null)
+        {
+            return;
+        }
+
+        var point = e.GetCurrentPoint(PreviewScrollViewer);
+        if (point.Properties.MouseWheelDelta == 0)
+        {
+            return;
+        }
+
+        _previewFitToWindow = false;
+
+        var multiplier = point.Properties.MouseWheelDelta > 0 ? 1.1f : 1f / 1.1f;
+        var current = PreviewScrollViewer.ZoomFactor;
+        var target = Math.Clamp(current * multiplier, PreviewScrollViewer.MinZoomFactor, PreviewScrollViewer.MaxZoomFactor);
+        if (Math.Abs(target - current) < 0.0001f)
+        {
+            return;
+        }
+
+        var cursor = point.Position;
+        var contentX = (PreviewScrollViewer.HorizontalOffset + cursor.X) / current;
+        var contentY = (PreviewScrollViewer.VerticalOffset + cursor.Y) / current;
+        var targetOffsetX = contentX * target - cursor.X;
+        var targetOffsetY = contentY * target - cursor.Y;
+
+        PreviewScrollViewer.ChangeView(targetOffsetX, targetOffsetY, target, true);
+        e.Handled = true;
+    }
+
+    private void OnPreviewPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (PreviewScrollViewer is null)
+        {
+            return;
+        }
+
+        var point = e.GetCurrentPoint(PreviewScrollViewer);
+        if (!point.Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        _previewFitToWindow = false;
+        _previewDragging = true;
+        _previewDragStart = point.Position;
+        _previewStartHorizontalOffset = PreviewScrollViewer.HorizontalOffset;
+        _previewStartVerticalOffset = PreviewScrollViewer.VerticalOffset;
+        PreviewScrollViewer.CapturePointer(e.Pointer);
+        e.Handled = true;
+    }
+
+    private void OnPreviewPointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_previewDragging || PreviewScrollViewer is null)
+        {
+            return;
+        }
+
+        var point = e.GetCurrentPoint(PreviewScrollViewer).Position;
+        var deltaX = point.X - _previewDragStart.X;
+        var deltaY = point.Y - _previewDragStart.Y;
+        PreviewScrollViewer.ChangeView(
+            _previewStartHorizontalOffset - deltaX,
+            _previewStartVerticalOffset - deltaY,
+            null,
+            true);
+        e.Handled = true;
+    }
+
+    private void OnPreviewPointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_previewDragging || PreviewScrollViewer is null)
+        {
+            return;
+        }
+
+        _previewDragging = false;
+        PreviewScrollViewer.ReleasePointerCapture(e.Pointer);
+        e.Handled = true;
+    }
+
+    private void OnPreviewPointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    {
+        _previewDragging = false;
     }
 
     private void ApplyPreviewFit()

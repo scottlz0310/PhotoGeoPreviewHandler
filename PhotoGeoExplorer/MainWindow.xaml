@@ -324,11 +324,17 @@
                                 ZoomMode="Enabled"
                                 MinZoomFactor="0.1"
                                 MaxZoomFactor="6"
-                                HorizontalScrollMode="Auto"
-                                VerticalScrollMode="Auto"
+                                HorizontalScrollMode="Disabled"
+                                VerticalScrollMode="Disabled"
+                                IsScrollInertiaEnabled="False"
                                 HorizontalScrollBarVisibility="Auto"
                                 VerticalScrollBarVisibility="Auto"
-                                SizeChanged="OnPreviewScrollViewerSizeChanged">
+                                SizeChanged="OnPreviewScrollViewerSizeChanged"
+                                PointerWheelChanged="OnPreviewPointerWheelChanged"
+                                PointerPressed="OnPreviewPointerPressed"
+                                PointerMoved="OnPreviewPointerMoved"
+                                PointerReleased="OnPreviewPointerReleased"
+                                PointerCaptureLost="OnPreviewPointerCaptureLost">
                                 <Image
                                     x:Name="PreviewImage"
                                     Source="{Binding SelectedPreview}"
