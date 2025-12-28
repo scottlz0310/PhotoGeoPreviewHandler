@@ -16,6 +16,7 @@ namespace PhotoGeoExplorer.ViewModels;
 internal sealed class MainViewModel : BindableBase
 {
     private readonly FileSystemService _fileSystemService;
+    private readonly List<PhotoListItem> _selectedItems = new();
     private CancellationTokenSource? _metadataCts;
     private string? _currentFolderPath;
     private string? _statusMessage;
@@ -48,6 +49,7 @@ internal sealed class MainViewModel : BindableBase
     private bool _hasActiveFilters;
     private FileSortColumn _sortColumn = FileSortColumn.Name;
     private SortDirection _sortDirection = SortDirection.Ascending;
+    private int _selectedCount;
 
     public MainViewModel(FileSystemService fileSystemService)
     {
@@ -62,7 +64,14 @@ internal sealed class MainViewModel : BindableBase
     public string? CurrentFolderPath
     {
         get => _currentFolderPath;
-        private set => SetProperty(ref _currentFolderPath, value);
+        private set
+        {
+            if (SetProperty(ref _currentFolderPath, value))
+            {
+                OnPropertyChanged(nameof(CanCreateFolder));
+                OnPropertyChanged(nameof(CanMoveToParentSelection));
+            }
+        }
     }
 
     public string? StatusMessage
@@ -193,6 +202,29 @@ internal sealed class MainViewModel : BindableBase
         get => _hasActiveFilters;
         private set => SetProperty(ref _hasActiveFilters, value);
     }
+
+    public int SelectedCount
+    {
+        get => _selectedCount;
+        private set
+        {
+            if (SetProperty(ref _selectedCount, value))
+            {
+                OnPropertyChanged(nameof(CanModifySelection));
+                OnPropertyChanged(nameof(CanRenameSelection));
+                OnPropertyChanged(nameof(CanMoveToParentSelection));
+            }
+        }
+    }
+
+    public bool CanCreateFolder => !string.IsNullOrWhiteSpace(CurrentFolderPath);
+    public bool CanModifySelection => SelectedCount > 0;
+    public bool CanRenameSelection => SelectedCount == 1;
+    public bool CanMoveToParentSelection
+        => SelectedCount > 0
+           && !string.IsNullOrWhiteSpace(CurrentFolderPath)
+           && Directory.GetParent(CurrentFolderPath) is not null;
+    public IReadOnlyList<PhotoListItem> SelectedItems => _selectedItems;
 
     public string NameSortIndicator => GetSortIndicator(FileSortColumn.Name);
     public string ModifiedSortIndicator => GetSortIndicator(FileSortColumn.ModifiedAt);
@@ -397,6 +429,7 @@ internal sealed class MainViewModel : BindableBase
             SelectedItem = null;
             SelectedMetadata = null;
             SetMetadataSummary(null, hasSelection: false);
+            UpdateSelection(Array.Empty<PhotoListItem>());
 
             var items = await _fileSystemService
                 .GetPhotoItemsAsync(folderPath, ShowImagesOnly, SearchText)
@@ -638,6 +671,17 @@ internal sealed class MainViewModel : BindableBase
     {
         HasActiveFilters = !string.IsNullOrWhiteSpace(SearchText) || !ShowImagesOnly;
         UpdateStatusOverlay(StatusMessage);
+    }
+
+    public void UpdateSelection(IReadOnlyList<PhotoListItem> items)
+    {
+        _selectedItems.Clear();
+        if (items.Count > 0)
+        {
+            _selectedItems.AddRange(items);
+        }
+
+        SelectedCount = _selectedItems.Count;
     }
 
     private void ApplySorting()

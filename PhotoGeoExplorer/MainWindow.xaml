@@ -150,11 +150,39 @@
                     <AppBarButton Icon="Up" ToolTipService.ToolTip="Up" Click="OnNavigateUpClicked" />
                     <AppBarButton Icon="Refresh" ToolTipService.ToolTip="Refresh" Click="OnRefreshClicked" />
                     <AppBarButton Icon="Home" ToolTipService.ToolTip="Home" Click="OnNavigateHomeClicked" />
+                    <AppBarSeparator />
+                    <AppBarButton
+                        Icon="Folder"
+                        Label="New folder"
+                        ToolTipService.ToolTip="New folder"
+                        IsEnabled="{Binding CanCreateFolder}"
+                        Click="OnCreateFolderClicked" />
+                    <AppBarButton
+                        Icon="Edit"
+                        Label="Rename"
+                        ToolTipService.ToolTip="Rename"
+                        IsEnabled="{Binding CanRenameSelection}"
+                        Click="OnRenameClicked" />
+                    <AppBarButton
+                        Icon="Forward"
+                        Label="Move"
+                        ToolTipService.ToolTip="Move"
+                        IsEnabled="{Binding CanModifySelection}"
+                        Click="OnMoveClicked" />
+                    <AppBarButton
+                        Icon="Delete"
+                        Label="Delete"
+                        ToolTipService.ToolTip="Delete"
+                        IsEnabled="{Binding CanModifySelection}"
+                        Click="OnDeleteClicked" />
                 </CommandBar>
                 <BreadcrumbBar
                     Grid.Row="2"
                     Margin="0,8,0,0"
                     ItemsSource="{Binding BreadcrumbItems}"
+                    AllowDrop="True"
+                    DragOver="OnBreadcrumbDragOver"
+                    Drop="OnBreadcrumbDrop"
                     ItemClicked="OnBreadcrumbItemClicked">
                     <BreadcrumbBar.ItemTemplate>
                         <DataTemplate>
@@ -275,38 +303,59 @@
                         Grid.Row="1"
                         ItemsSource="{Binding Items}"
                         SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                        SelectionMode="Single"
+                        SelectionMode="Extended"
+                        IsMultiSelectCheckBoxEnabled="True"
                         IsItemClickEnabled="True"
                         ItemClick="OnFileItemClicked"
+                        SelectionChanged="OnFileSelectionChanged"
+                        CanDragItems="True"
+                        CanReorderItems="False"
+                        DragItemsStarting="OnFileItemsDragStarting"
+                        DragItemsCompleted="OnFileItemsDragCompleted"
                         ItemTemplate="{StaticResource ListItemTemplate}"
                         AllowDrop="True"
                         DragOver="OnFileListDragOver"
                         Drop="OnFileListDrop"
+                        RightTapped="OnFileListRightTapped"
                         Visibility="{Binding ListViewVisibility}" />
                     <GridView
                         Grid.Row="1"
                         ItemsSource="{Binding Items}"
                         SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                        SelectionMode="Single"
+                        SelectionMode="Extended"
+                        IsMultiSelectCheckBoxEnabled="True"
                         IsItemClickEnabled="True"
                         ItemClick="OnFileItemClicked"
+                        SelectionChanged="OnFileSelectionChanged"
+                        CanDragItems="True"
+                        CanReorderItems="False"
+                        DragItemsStarting="OnFileItemsDragStarting"
+                        DragItemsCompleted="OnFileItemsDragCompleted"
                         ItemTemplate="{StaticResource IconItemTemplate}"
                         AllowDrop="True"
                         DragOver="OnFileListDragOver"
                         Drop="OnFileListDrop"
+                        RightTapped="OnFileListRightTapped"
                         Visibility="{Binding IconViewVisibility}" />
                     <ListView
                         Grid.Row="1"
                         ItemsSource="{Binding Items}"
                         SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                        SelectionMode="Single"
+                        SelectionMode="Extended"
+                        IsMultiSelectCheckBoxEnabled="True"
                         IsItemClickEnabled="True"
                         ItemClick="OnFileItemClicked"
+                        SelectionChanged="OnFileSelectionChanged"
+                        CanDragItems="True"
+                        CanReorderItems="False"
+                        DragItemsStarting="OnFileItemsDragStarting"
+                        DragItemsCompleted="OnFileItemsDragCompleted"
                         ItemTemplate="{StaticResource DetailsItemTemplate}"
                         HorizontalContentAlignment="Stretch"
                         AllowDrop="True"
                         DragOver="OnFileListDragOver"
                         Drop="OnFileListDrop"
+                        RightTapped="OnFileListRightTapped"
                         Visibility="{Binding DetailsViewVisibility}" />
                     <Border
                         Grid.Row="1"

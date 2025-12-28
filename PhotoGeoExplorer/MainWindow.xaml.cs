@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using BruTile.Cache;
 using Mapsui;
@@ -32,6 +34,7 @@ namespace PhotoGeoExplorer;
 [SuppressMessage("Design", "CA1515:Consider making public types internal")]
 public sealed partial class MainWindow : Window
 {
+    private const string InternalDragKey = "PhotoGeoExplorer.InternalDrag";
     private readonly MainViewModel _viewModel;
     private bool _layoutStored;
     private bool _mapInitialized;
@@ -50,6 +53,7 @@ public sealed partial class MainWindow : Window
     private Point _previewDragStart;
     private double _previewStartHorizontalOffset;
     private double _previewStartVerticalOffset;
+    private List<PhotoListItem>? _dragItems;
 
     public MainWindow()
     {
@@ -615,30 +619,7 @@ public sealed partial class MainWindow : Window
 
     private async Task OpenFolderPickerAsync()
     {
-        var picker = new FolderPicker
-        {
-            SuggestedStartLocation = PickerLocationId.PicturesLibrary
-        };
-        picker.FileTypeFilter.Add("*");
-
-        var hwnd = WindowNative.GetWindowHandle(this);
-        InitializeWithWindow.Initialize(picker, hwnd);
-
-        StorageFolder? folder;
-        try
-        {
-            folder = await picker.PickSingleFolderAsync().AsTask().ConfigureAwait(true);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            AppLog.Error("Folder picker failed.", ex);
-            return;
-        }
-        catch (System.Runtime.InteropServices.COMException ex)
-        {
-            AppLog.Error("Folder picker failed.", ex);
-            return;
-        }
+        var folder = await PickFolderAsync(PickerLocationId.PicturesLibrary).ConfigureAwait(true);
 
         if (folder is null)
         {
@@ -646,6 +627,33 @@ public sealed partial class MainWindow : Window
         }
 
         await _viewModel.LoadFolderAsync(folder.Path).ConfigureAwait(true);
+    }
+
+    private async Task<StorageFolder?> PickFolderAsync(PickerLocationId startLocation)
+    {
+        var picker = new FolderPicker
+        {
+            SuggestedStartLocation = startLocation
+        };
+        picker.FileTypeFilter.Add("*");
+
+        var hwnd = WindowNative.GetWindowHandle(this);
+        InitializeWithWindow.Initialize(picker, hwnd);
+
+        try
+        {
+            return await picker.PickSingleFolderAsync().AsTask().ConfigureAwait(true);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            AppLog.Error("Folder picker failed.", ex);
+        }
+        catch (System.Runtime.InteropServices.COMException ex)
+        {
+            AppLog.Error("Folder picker failed.", ex);
+        }
+
+        return null;
     }
 
     private async void OnStatusPrimaryActionClicked(object sender, RoutedEventArgs e)
@@ -722,8 +730,78 @@ public sealed partial class MainWindow : Window
         await _viewModel.LoadFolderAsync(folderPath).ConfigureAwait(true);
     }
 
+    private void OnBreadcrumbDragOver(object sender, DragEventArgs e)
+    {
+        if (!IsInternalDrag(e))
+        {
+            e.AcceptedOperation = DataPackageOperation.None;
+            e.Handled = true;
+            return;
+        }
+
+        if (sender is not BreadcrumbBar breadcrumbBar)
+        {
+            return;
+        }
+
+        if (TryGetBreadcrumbTarget(breadcrumbBar, e, out _))
+        {
+            e.AcceptedOperation = DataPackageOperation.Move;
+        }
+        else
+        {
+            e.AcceptedOperation = DataPackageOperation.None;
+        }
+
+        e.Handled = true;
+    }
+
+    private async void OnBreadcrumbDrop(object sender, DragEventArgs e)
+    {
+        if (!IsInternalDrag(e))
+        {
+            return;
+        }
+
+        if (sender is not BreadcrumbBar breadcrumbBar)
+        {
+            return;
+        }
+
+        if (!TryGetBreadcrumbTarget(breadcrumbBar, e, out var target))
+        {
+            return;
+        }
+
+        await MoveItemsToFolderAsync(_dragItems ?? _viewModel.SelectedItems, target.FullPath)
+            .ConfigureAwait(true);
+    }
+
     private void OnFileListDragOver(object sender, DragEventArgs e)
     {
+        if (IsInternalDrag(e))
+        {
+            if (sender is not ListViewBase)
+            {
+                e.AcceptedOperation = DataPackageOperation.None;
+                e.Handled = true;
+                return;
+            }
+
+            if (sender is ListViewBase listView
+                && TryGetDropTargetFolder(listView, RootGrid, e, out _))
+            {
+                e.AcceptedOperation = DataPackageOperation.Move;
+            }
+            else
+            {
+                e.AcceptedOperation = DataPackageOperation.None;
+            }
+
+            e.Handled = true;
+            return;
+        }
+
         e.AcceptedOperation = e.DataView.Contains(StandardDataFormats.StorageItems)
             ? DataPackageOperation.Copy
             : DataPackageOperation.None;
@@ -732,6 +810,23 @@ public sealed partial class MainWindow : Window
 
     private async void OnFileListDrop(object sender, DragEventArgs e)
     {
+        if (IsInternalDrag(e))
+        {
+            if (sender is not ListViewBase)
+            {
+                return;
+            }
+
+            if (sender is ListViewBase listView
+                && TryGetDropTargetFolder(listView, RootGrid, e, out var targetFolder))
+            {
+                await MoveItemsToFolderAsync(_dragItems ?? _viewModel.SelectedItems, targetFolder.FilePath)
+                    .ConfigureAwait(true);
+            }
+
+            return;
+        }
+
         if (!e.DataView.Contains(StandardDataFormats.StorageItems))
         {
             return;
@@ -780,6 +875,51 @@ public sealed partial class MainWindow : Window
         _viewModel.SelectItemByPath(firstFile.Path);
     }
 
+    private void OnFileItemsDragStarting(object sender, DragItemsStartingEventArgs e)
+    {
+        _dragItems = e.Items.OfType<PhotoListItem>().ToList();
+        if (_dragItems.Count == 0 && _viewModel.SelectedItems.Count > 0)
+        {
+            _dragItems = _viewModel.SelectedItems.ToList();
+        }
+        e.Data.RequestedOperation = DataPackageOperation.Move;
+        e.Data.Properties[InternalDragKey] = true;
+    }
+
+    private void OnFileItemsDragCompleted(object sender, DragItemsCompletedEventArgs e)
+    {
+        _dragItems = null;
+    }
+
+    private void OnFileListRightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        if (sender is not ListViewBase listView)
+        {
+            return;
+        }
+
+        var source = e.OriginalSource as DependencyObject;
+        if (source is not null)
+        {
+            var container = FindAncestor<SelectorItem>(source);
+            if (container is not null
+                && listView.ItemFromContainer(container) is PhotoListItem item)
+            {
+                _viewModel.SelectedItem = item;
+            }
+            else
+            {
+                listView.SelectedItems.Clear();
+                _viewModel.SelectedItem = null;
+                _viewModel.UpdateSelection(Array.Empty<PhotoListItem>());
+            }
+        }
+
+        var flyout = BuildFileContextFlyout();
+        flyout.ShowAt(listView, e.GetPosition(listView));
+        e.Handled = true;
+    }
+
     private async void OnFileItemClicked(object sender, ItemClickEventArgs e)
     {
         if (e.ClickedItem is not PhotoListItem item)
@@ -793,6 +933,19 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void OnFileSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ListViewBase listView)
+        {
+            return;
+        }
+
+        var selected = listView.SelectedItems
+            .OfType<PhotoListItem>()
+            .ToList();
+        _viewModel.UpdateSelection(selected);
+    }
+
     private async void OnSearchKeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (e.Key != VirtualKey.Enter)
@@ -801,6 +954,605 @@ public sealed partial class MainWindow : Window
         }
 
         await _viewModel.RefreshAsync().ConfigureAwait(true);
+    }
+
+    private async void OnCreateFolderClicked(object sender, RoutedEventArgs e)
+    {
+        var currentFolder = _viewModel.CurrentFolderPath;
+        if (string.IsNullOrWhiteSpace(currentFolder))
+        {
+            return;
+        }
+
+        var folderName = await ShowTextInputDialogAsync(
+            "New folder",
+            "Create",
+            "New Folder",
+            "Folder name").ConfigureAwait(true);
+        if (string.IsNullOrWhiteSpace(folderName))
+        {
+            return;
+        }
+
+        if (ContainsInvalidFileNameChars(folderName))
+        {
+            await ShowMessageDialogAsync(
+                "Invalid name",
+                "The folder name contains invalid characters.").ConfigureAwait(true);
+            return;
+        }
+
+        var targetPath = Path.Combine(currentFolder, folderName);
+        if (Directory.Exists(targetPath) || File.Exists(targetPath))
+        {
+            await ShowMessageDialogAsync(
+                "Already exists",
+                "A file or folder with the same name already exists.").ConfigureAwait(true);
+            return;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(targetPath);
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException
+            or IOException
+            or NotSupportedException
+            or ArgumentException
+            or PathTooLongException)
+        {
+            AppLog.Error($"Failed to create folder: {targetPath}", ex);
+            await ShowMessageDialogAsync(
+                "Create folder failed",
+                "See log for details.").ConfigureAwait(true);
+            return;
+        }
+
+        await _viewModel.RefreshAsync().ConfigureAwait(true);
+        _viewModel.SelectItemByPath(targetPath);
+    }
+
+    private async void OnRenameClicked(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedItems.Count != 1 || _viewModel.SelectedItems[0] is not PhotoListItem item)
+        {
+            return;
+        }
+
+        var parent = Path.GetDirectoryName(item.FilePath);
+        if (string.IsNullOrWhiteSpace(parent))
+        {
+            await ShowMessageDialogAsync(
+                "Rename not available",
+                "This item cannot be renamed.").ConfigureAwait(true);
+            return;
+        }
+
+        var newName = await ShowTextInputDialogAsync(
+            "Rename",
+            "Rename",
+            item.FileName,
+            "New name").ConfigureAwait(true);
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            return;
+        }
+
+        var normalizedName = NormalizeRename(item, newName);
+        if (string.Equals(normalizedName, item.FileName, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (ContainsInvalidFileNameChars(normalizedName))
+        {
+            await ShowMessageDialogAsync(
+                "Invalid name",
+                "The name contains invalid characters.").ConfigureAwait(true);
+            return;
+        }
+
+        var targetPath = Path.Combine(parent, normalizedName);
+        if (Directory.Exists(targetPath) || File.Exists(targetPath))
+        {
+            await ShowMessageDialogAsync(
+                "Already exists",
+                "A file or folder with the same name already exists.").ConfigureAwait(true);
+            return;
+        }
+
+        try
+        {
+            if (item.IsFolder)
+            {
+                Directory.Move(item.FilePath, targetPath);
+            }
+            else
+            {
+                File.Move(item.FilePath, targetPath);
+            }
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException
+            or IOException
+            or NotSupportedException
+            or ArgumentException
+            or PathTooLongException)
+        {
+            AppLog.Error($"Failed to rename item: {item.FilePath}", ex);
+            await ShowMessageDialogAsync(
+                "Rename failed",
+                "See log for details.").ConfigureAwait(true);
+            return;
+        }
+
+        await _viewModel.RefreshAsync().ConfigureAwait(true);
+        _viewModel.SelectItemByPath(targetPath);
+    }
+
+    private async void OnMoveClicked(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedItems.Count == 0)
+        {
+            return;
+        }
+
+        var destination = await PickFolderAsync(PickerLocationId.PicturesLibrary).ConfigureAwait(true);
+        if (destination is null)
+        {
+            return;
+        }
+
+        await MoveItemsToFolderAsync(_viewModel.SelectedItems, destination.Path).ConfigureAwait(true);
+    }
+
+    private async void OnDeleteClicked(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedItems.Count == 0)
+        {
+            return;
+        }
+
+        var message = _viewModel.SelectedItems.Count == 1
+            ? BuildDeleteMessage(_viewModel.SelectedItems[0])
+            : $"Delete {_viewModel.SelectedItems.Count} items?";
+        var confirmed = await ShowConfirmationDialogAsync(
+            "Delete",
+            message,
+            "Delete").ConfigureAwait(true);
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await DeleteItemsAsync(_viewModel.SelectedItems).ConfigureAwait(true);
+    }
+
+    private MenuFlyout BuildFileContextFlyout()
+    {
+        var flyout = new MenuFlyout();
+
+        var createFolder = new MenuFlyoutItem
+        {
+            Text = "New folder",
+            Icon = new SymbolIcon(Symbol.Folder),
+            IsEnabled = _viewModel.CanCreateFolder
+        };
+        createFolder.Click += OnCreateFolderClicked;
+
+        var renameItem = new MenuFlyoutItem
+        {
+            Text = "Rename",
+            Icon = new SymbolIcon(Symbol.Edit),
+            IsEnabled = _viewModel.CanRenameSelection
+        };
+        renameItem.Click += OnRenameClicked;
+
+        var moveItem = new MenuFlyoutItem
+        {
+            Text = "Move",
+            Icon = new SymbolIcon(Symbol.Forward),
+            IsEnabled = _viewModel.CanModifySelection
+        };
+        moveItem.Click += OnMoveClicked;
+
+        var moveParentItem = new MenuFlyoutItem
+        {
+            Text = "Move to parent",
+            Icon = new SymbolIcon(Symbol.Up),
+            IsEnabled = _viewModel.CanMoveToParentSelection
+        };
+        moveParentItem.Click += OnMoveToParentClicked;
+
+        var deleteItem = new MenuFlyoutItem
+        {
+            Text = "Delete",
+            Icon = new SymbolIcon(Symbol.Delete),
+            IsEnabled = _viewModel.CanModifySelection
+        };
+        deleteItem.Click += OnDeleteClicked;
+
+        flyout.Items.Add(createFolder);
+        flyout.Items.Add(new MenuFlyoutSeparator());
+        flyout.Items.Add(renameItem);
+        flyout.Items.Add(moveItem);
+        flyout.Items.Add(moveParentItem);
+        flyout.Items.Add(deleteItem);
+
+        return flyout;
+    }
+
+    private static bool IsInternalDrag(DragEventArgs e)
+    {
+        if (!e.DataView.Properties.TryGetValue(InternalDragKey, out var value))
+        {
+            return false;
+        }
+
+        return value is bool isInternal && isInternal;
+    }
+
+    private static bool TryGetDropTargetFolder(ListViewBase listView, UIElement root, DragEventArgs e, out PhotoListItem target)
+    {
+        target = null!;
+        var point = e.GetPosition(root);
+        var elements = Microsoft.UI.Xaml.Media.VisualTreeHelper.FindElementsInHostCoordinates(point, root);
+        foreach (var element in elements)
+        {
+            var container = element as SelectorItem ?? FindAncestor<SelectorItem>(element);
+            if (container is null)
+            {
+                continue;
+            }
+
+            if (!IsDescendantOf(container, listView))
+            {
+                continue;
+            }
+
+            if (listView.ItemFromContainer(container) is not PhotoListItem item || !item.IsFolder)
+            {
+                continue;
+            }
+
+            target = item;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryGetBreadcrumbTarget(BreadcrumbBar breadcrumbBar, DragEventArgs e, out BreadcrumbSegment target)
+    {
+        target = null!;
+        var point = e.GetPosition(RootGrid);
+        var elements = Microsoft.UI.Xaml.Media.VisualTreeHelper.FindElementsInHostCoordinates(point, RootGrid);
+        foreach (var element in elements)
+        {
+            var container = element as BreadcrumbBarItem ?? FindAncestor<BreadcrumbBarItem>(element);
+            if (container is null)
+            {
+                continue;
+            }
+
+            if (!IsDescendantOf(container, breadcrumbBar))
+            {
+                continue;
+            }
+
+            if (container.DataContext is not BreadcrumbSegment segment)
+            {
+                continue;
+            }
+
+            target = segment;
+            return true;
+        }
+
+        return false;
+    }
+
+    private async Task MoveItemsToFolderAsync(IReadOnlyList<PhotoListItem>? items, string destinationFolder)
+    {
+        if (string.IsNullOrWhiteSpace(destinationFolder))
+        {
+            return;
+        }
+
+        if (items is null || items.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var item in items)
+        {
+            var sourcePath = item.FilePath;
+            var parent = Path.GetDirectoryName(sourcePath);
+            if (string.IsNullOrWhiteSpace(parent))
+            {
+                continue;
+            }
+
+            if (IsSamePath(parent, destinationFolder))
+            {
+                continue;
+            }
+
+            if (item.IsFolder && IsDescendantPath(sourcePath, destinationFolder))
+            {
+                await ShowMessageDialogAsync(
+                    "Move failed",
+                    "Cannot move a folder into itself.").ConfigureAwait(true);
+                return;
+            }
+
+            var targetPath = Path.Combine(destinationFolder, item.FileName);
+            if (Directory.Exists(targetPath) || File.Exists(targetPath))
+            {
+                await ShowMessageDialogAsync(
+                    "Already exists",
+                    "A file or folder with the same name already exists in the destination.").ConfigureAwait(true);
+                return;
+            }
+
+            try
+            {
+                if (item.IsFolder)
+                {
+                    Directory.Move(sourcePath, targetPath);
+                }
+                else
+                {
+                    File.Move(sourcePath, targetPath);
+                }
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException
+                or IOException
+                or NotSupportedException
+                or ArgumentException
+                or PathTooLongException)
+            {
+                AppLog.Error($"Failed to move item: {sourcePath}", ex);
+                await ShowMessageDialogAsync(
+                    "Move failed",
+                    "See log for details.").ConfigureAwait(true);
+                return;
+            }
+        }
+
+        await _viewModel.RefreshAsync().ConfigureAwait(true);
+    }
+
+    private static bool IsSamePath(string left, string right)
+    {
+        var normalizedLeft = Path.GetFullPath(left)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var normalizedRight = Path.GetFullPath(right)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return string.Equals(normalizedLeft, normalizedRight, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsDescendantPath(string root, string candidate)
+    {
+        var normalizedRoot = Path.GetFullPath(root)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        var normalizedCandidate = Path.GetFullPath(candidate)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        return normalizedCandidate.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static T? FindAncestor<T>(DependencyObject? source) where T : DependencyObject
+    {
+        var current = source;
+        while (current is not null)
+        {
+            if (current is T match)
+            {
+                return match;
+            }
+
+            current = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return null;
+    }
+
+    private static bool IsDescendantOf(DependencyObject? child, DependencyObject ancestor)
+    {
+        var current = child;
+        while (current is not null)
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+
+            current = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
+    }
+
+    private async Task DeleteItemsAsync(IReadOnlyList<PhotoListItem> items)
+    {
+        foreach (var item in items)
+        {
+            if (item.IsFolder && Directory.GetParent(item.FilePath) is null)
+            {
+                await ShowMessageDialogAsync(
+                    "Delete not available",
+                    "This folder cannot be deleted.").ConfigureAwait(true);
+                return;
+            }
+
+            try
+            {
+                if (item.IsFolder)
+                {
+                    Directory.Delete(item.FilePath, recursive: true);
+                }
+                else
+                {
+                    File.Delete(item.FilePath);
+                }
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException
+                or IOException
+                or NotSupportedException
+                or ArgumentException
+                or PathTooLongException)
+            {
+                AppLog.Error($"Failed to delete item: {item.FilePath}", ex);
+                await ShowMessageDialogAsync(
+                    "Delete failed",
+                    "See log for details.").ConfigureAwait(true);
+                return;
+            }
+        }
+
+        await _viewModel.RefreshAsync().ConfigureAwait(true);
+    }
+
+    private static string BuildDeleteMessage(PhotoListItem item)
+    {
+        return item.IsFolder
+            ? $"Delete \"{item.FileName}\" and all of its contents?"
+            : $"Delete \"{item.FileName}\"?";
+    }
+
+    private async Task<string?> ShowTextInputDialogAsync(
+        string title,
+        string primaryButtonText,
+        string? defaultText,
+        string placeholderText)
+    {
+        var textBox = new TextBox
+        {
+            Text = defaultText ?? string.Empty,
+            PlaceholderText = placeholderText,
+            MinWidth = 260
+        };
+
+        var dialog = new ContentDialog
+        {
+            Title = title,
+            Content = textBox,
+            PrimaryButtonText = primaryButtonText,
+            SecondaryButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = RootGrid.XamlRoot
+        };
+
+        dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Text);
+        textBox.TextChanged += (_, _) =>
+        {
+            dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Text);
+        };
+        dialog.Opened += (_, _) =>
+        {
+            textBox.Focus(FocusState.Programmatic);
+            textBox.SelectAll();
+        };
+
+        var result = await dialog.ShowAsync().AsTask().ConfigureAwait(true);
+        if (result != ContentDialogResult.Primary)
+        {
+            return null;
+        }
+
+        var value = textBox.Text.Trim();
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    private async Task<bool> ShowConfirmationDialogAsync(
+        string title,
+        string message,
+        string primaryButtonText)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = title,
+            Content = new TextBlock
+            {
+                Text = message,
+                TextWrapping = TextWrapping.Wrap
+            },
+            PrimaryButtonText = primaryButtonText,
+            SecondaryButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Secondary,
+            XamlRoot = RootGrid.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync().AsTask().ConfigureAwait(true);
+        return result == ContentDialogResult.Primary;
+    }
+
+    private async Task ShowMessageDialogAsync(string title, string message)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = title,
+            Content = new TextBlock
+            {
+                Text = message,
+                TextWrapping = TextWrapping.Wrap
+            },
+            CloseButtonText = "OK",
+            XamlRoot = RootGrid.XamlRoot
+        };
+
+        await dialog.ShowAsync().AsTask().ConfigureAwait(true);
+    }
+
+    private static bool ContainsInvalidFileNameChars(string name)
+    {
+        return name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0;
+    }
+
+    private static string NormalizeRename(PhotoListItem item, string newName)
+    {
+        var trimmed = newName.Trim();
+        if (item.IsFolder)
+        {
+            return trimmed;
+        }
+
+        var originalExtension = Path.GetExtension(item.FileName);
+        if (string.IsNullOrWhiteSpace(originalExtension))
+        {
+            return trimmed;
+        }
+
+        var newExtension = Path.GetExtension(trimmed);
+        if (string.IsNullOrWhiteSpace(newExtension))
+        {
+            return $"{trimmed}{originalExtension}";
+        }
+
+        return trimmed;
+    }
+
+    private async void OnMoveToParentClicked(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedItems.Count == 0)
+        {
+            return;
+        }
+
+        var currentFolder = _viewModel.CurrentFolderPath;
+        if (string.IsNullOrWhiteSpace(currentFolder))
+        {
+            return;
+        }
+
+        var parent = Directory.GetParent(currentFolder);
+        if (parent is null)
+        {
+            return;
+        }
+
+        await MoveItemsToFolderAsync(_viewModel.SelectedItems, parent.FullName).ConfigureAwait(true);
     }
 
     private void OnDetailsSortClicked(object sender, RoutedEventArgs e)
