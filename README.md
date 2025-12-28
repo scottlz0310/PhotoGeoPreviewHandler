@@ -1,73 +1,70 @@
 # PhotoGeoExplorer
 
-PhotoGeoExplorer is a Windows desktop app for viewing photo locations on a map.
-It targets Windows 10/11 and uses WinUI 3 and WebView2 to render a local Leaflet
-map.
+PhotoGeoExplorer は、写真の位置情報を地図上に表示する Windows デスクトップアプリです。
+Windows 10/11 を対象とし、WinUI 3 と WebView2 でローカルの Leaflet マップを描画します。
 
-## Status
+## ステータス
 
-This repository is in early development. The UI shell and map loading are in
-place, but the file browser, EXIF extraction, and map plotting logic are still
-under active development.
+このリポジトリは初期開発段階です。UI シェルと地図読み込みは実装済みですが、
+ファイルブラウザ、EXIF 抽出、地図プロットのロジックは開発中です。
 
-## Current Features
+## 現在の機能
 
-- WinUI 3 single-window layout with File Browser, Image Preview, and Map panes.
-- WebView2 loads a local `wwwroot/index.html` map page.
-- Application logging to `%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log`.
+- WinUI 3 の単一ウィンドウ構成（ファイルブラウザ、画像プレビュー、地図の各ペイン）
+- WebView2 でローカルの `wwwroot/index.html` マップページを読み込み
+- `%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log` へのアプリログ出力
 
-## Planned Features
+## 予定している機能
 
-- Folder navigation and file list with thumbnails.
-- EXIF/GPS extraction and map markers.
-- Image preview controls (zoom/pan).
-- Offline-friendly map tile caching.
+- フォルダナビゲーションとサムネイル付きファイル一覧
+- EXIF/GPS 抽出と地図マーカー表示
+- 画像プレビュー操作（ズーム/パン）
+- オフライン向け地図タイルキャッシュ
 
-## Tech Stack
+## 技術スタック
 
-- .NET 10 / C#  (WinUI 3, Windows App SDK)
-- WebView2 + Leaflet for map rendering
-- MetadataExtractor for EXIF metadata
-- SixLabors.ImageSharp for thumbnails and image processing
+- .NET 10 / C# (WinUI 3, Windows App SDK)
+- WebView2 + Leaflet による地図描画
+- EXIF 抽出に MetadataExtractor
+- サムネイル/画像処理に SixLabors.ImageSharp
 
-## Prerequisites
+## 前提条件
 
 - Windows 10/11
 - .NET 10 SDK
-- Visual Studio 2026 with WinUI 3 workload (optional for IDE usage)
+- Visual Studio 2026 (WinUI 3 ワークロード。IDE で使う場合は任意)
 - WebView2 Runtime
 
-## Build
+## ビルド
 
 ```powershell
 dotnet restore PhotoGeoExplorer.sln
 dotnet build PhotoGeoExplorer.sln -c Release -p:Platform=x64
 ```
 
-## Run
+## 実行
 
 ```powershell
 dotnet run --project PhotoGeoExplorer/PhotoGeoExplorer.csproj -c Release -p:Platform=x64
 ```
 
-## Formatting and Quality Gates
+## フォーマット/品質チェック
 
 ```powershell
 dotnet format --verify-no-changes PhotoGeoExplorer.sln
 dotnet build PhotoGeoExplorer.sln -c Release -p:Platform=x64 -p:TreatWarningsAsErrors=true -p:AnalysisLevel=latest
 ```
 
-Optional hooks:
+任意のフック:
 
 ```powershell
 lefthook install
 ```
 
-## Release Artifacts
+## リリース成果物
 
-The release workflow builds an unsigned MSIX installer for `win-x64` on tag
-pushes (e.g., `v0.1.0`).
+タグの push (例: `v0.1.0`) を契機に、`win-x64` 向けの未署名 MSIX インストーラーを作成します。
 
-## License
+## ライセンス
 
-See `LICENSE` if added. Otherwise, this project is currently unlicensed.
+`LICENSE` が追加されている場合はそちらを参照してください。未追加の場合は現状未ライセンスです。

@@ -1,24 +1,24 @@
-# Changelog
+# 変更履歴
 
-All notable changes to this project will be documented in this file.
+このプロジェクトの主な変更点をここに記録します。
 
-## [Unreleased]
+## [未リリース]
 
-### Added
-- WinUI 3 app shell with File Browser, Image Preview, and Map panes.
-- WebView2 initialization that loads the local `wwwroot/index.html` map page.
-- Application logging to `%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log`.
-- CI/quality/security workflows and a tag-based release workflow for unsigned MSIX artifacts.
-- Pre-commit and pre-push checks via lefthook.
+### 追加
+- WinUI 3 アプリシェル（ファイルブラウザ、画像プレビュー、地図の各ペイン）。
+- ローカルの `wwwroot/index.html` マップページを読み込む WebView2 初期化。
+- `%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log` へのアプリログ出力。
+- CI/品質/セキュリティのワークフローと、タグベースの未署名 MSIX リリースワークフロー。
+- lefthook による pre-commit / pre-push チェック。
 
-### Changed
-- Adopted strict analyzer settings and formatting checks in CI and hooks.
-- Updated core dependencies (Windows App SDK, WebView2, MetadataExtractor).
+### 変更
+- 解析の厳格化とフォーマットチェックを CI とフックに導入。
+- 主要依存関係の更新（Windows App SDK、WebView2、MetadataExtractor）。
 
-### Fixed
-- CodeQL build failures by redirecting generated files to a shorter path.
-- Windows App SDK bootstrap path for app startup.
-- Window sizing logic to use `AppWindow` safely.
+### 修正
+- 生成ファイルの出力先を短いパスに変更し、CodeQL のビルド失敗を解消。
+- Windows App SDK のブートストラップパスを修正し、アプリ起動を安定化。
+- `AppWindow` を安全に扱うようにウィンドウサイズ計算を修正。
 
-### Removed
-- Placeholder Models/Services/ViewModels that were not yet wired into the app.
+### 削除
+- まだアプリに接続されていなかった仮置きの Models/Services/ViewModels。

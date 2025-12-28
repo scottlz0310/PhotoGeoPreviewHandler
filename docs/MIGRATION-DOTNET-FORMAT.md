@@ -1,77 +1,78 @@
-# Migration from dotnet-format to built-in dotnet format
+# dotnet-format から組み込み dotnet format への移行
 
-## Background
+## 背景
 
-The standalone `dotnet-format` tool has been deprecated since .NET 6.0 and integrated into the .NET SDK as a built-in command. This repository has been updated to use the built-in `dotnet format` command instead of the deprecated standalone tool.
+単体ツールの `dotnet-format` は .NET 6.0 以降で非推奨となり、.NET SDK に組み込みコマンドとして統合されました。
+本リポジトリでは、非推奨の単体ツールではなく組み込みの `dotnet format` を使用するよう更新しています。
 
-## Changes Made
+## 実施内容
 
-### 1. Removed standalone tool dependency
-- **File**: `.config/dotnet-tools.json`
-- **Change**: Removed the `dotnet-format` tool entry (version 5.1.250801)
-- **Reason**: The standalone tool is deprecated and no longer needed
+### 1. スタンドアロンツールの依存削除
+- **対象ファイル**: `.config/dotnet-tools.json`
+- **変更**: `dotnet-format` ツールエントリ（version 5.1.250801）を削除
+- **理由**: 単体ツールは非推奨となり不要
 
-### 2. Updated pre-commit hooks
-- **File**: `lefthook.yml`
-- **Before**: `dotnet tool restore && dotnet tool run dotnet-format --check PhotoGeoExplorer.sln`
-- **After**: `dotnet format --verify-no-changes PhotoGeoExplorer.sln`
-- **Benefits**: Faster execution (no tool restore needed), uses SDK-integrated command
+### 2. pre-commit フックの更新
+- **対象ファイル**: `lefthook.yml`
+- **変更前**: `dotnet tool restore && dotnet tool run dotnet-format --check PhotoGeoExplorer.sln`
+- **変更後**: `dotnet format --verify-no-changes PhotoGeoExplorer.sln`
+- **効果**: ツール復元が不要になり実行が高速化、SDK 組み込みコマンドに統一
 
-### 3. Updated CI/CD workflow
-- **File**: `.github/workflows/quality-check.yml`
-- **Changes**:
-  - Removed "Restore dotnet tools" step
-  - Updated format check command: `dotnet format --verify-no-changes PhotoGeoExplorer.sln`
-- **Benefits**: Simpler workflow, faster CI execution
+### 3. CI/CD ワークフローの更新
+- **対象ファイル**: `.github/workflows/quality-check.yml`
+- **変更内容**:
+  - "Restore dotnet tools" ステップを削除
+  - フォーマット確認コマンドを `dotnet format --verify-no-changes PhotoGeoExplorer.sln` に変更
+- **効果**: ワークフローの簡素化と CI 実行時間の短縮
 
-## Command Reference
+## コマンド一覧
 
-### Old Command (Deprecated)
+### 旧コマンド（非推奨）
 ```bash
 dotnet tool restore
 dotnet tool run dotnet-format --check PhotoGeoExplorer.sln
 ```
 
-### New Command (Built-in)
+### 新コマンド（組み込み）
 ```bash
-# Check formatting without making changes
+# 変更を加えずにフォーマットを確認
 dotnet format --verify-no-changes PhotoGeoExplorer.sln
 
-# Apply formatting
+# フォーマットを適用
 dotnet format PhotoGeoExplorer.sln
 ```
 
-## Key Differences
+## 主な違い
 
-| Feature | Old (dotnet-format) | New (dotnet format) |
+| 項目 | 旧 (dotnet-format) | 新 (dotnet format) |
 |---------|---------------------|---------------------|
-| Installation | Separate tool via `.config/dotnet-tools.json` | Built into .NET SDK |
-| Check mode | `--check` | `--verify-no-changes` |
-| Invocation | `dotnet tool run dotnet-format` | `dotnet format` |
-| Restore needed | Yes (`dotnet tool restore`) | No |
+| インストール | `.config/dotnet-tools.json` 経由の個別ツール | .NET SDK に標準搭載 |
+| チェックモード | `--check` | `--verify-no-changes` |
+| 実行方法 | `dotnet tool run dotnet-format` | `dotnet format` |
+| 復元の必要性 | あり (`dotnet tool restore`) | なし |
 
-## Benefits of Migration
+## 移行のメリット
 
-1. **No separate tool installation**: The command is built into the .NET SDK
-2. **Faster execution**: No need to restore tools before running
-3. **Better integration**: Works seamlessly with SDK tooling
-4. **Future-proof**: Actively maintained as part of the .NET SDK
-5. **Simpler configuration**: No separate tool manifest needed
+1. **個別ツールのインストール不要**: .NET SDK に標準搭載
+2. **実行が高速**: ツール復元が不要
+3. **統合性向上**: SDK ツールチェーンと統一
+4. **将来性**: SDK として継続的にメンテナンス
+5. **構成の簡素化**: ツールマニフェストの削減
 
-## Testing
+## テスト
 
-To verify the migration works correctly:
+移行が正しく動作するか確認するには以下を実行してください。
 
 ```bash
-# Check formatting (should exit with error if formatting is needed)
+# フォーマット確認（差分があればエラー終了）
 dotnet format --verify-no-changes PhotoGeoExplorer.sln
 
-# Apply formatting
+# フォーマットを適用
 dotnet format PhotoGeoExplorer.sln
 ```
 
-## Additional Resources
+## 参考資料
 
-- [dotnet format documentation](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format)
-- [Code style analysis overview](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview)
-- [.NET SDK built-in tools](https://learn.microsoft.com/en-us/dotnet/core/tools/)
+- [dotnet format ドキュメント](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format)
+- [コードスタイル分析の概要](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview)
+- [.NET SDK 組み込みツール](https://learn.microsoft.com/en-us/dotnet/core/tools/)
