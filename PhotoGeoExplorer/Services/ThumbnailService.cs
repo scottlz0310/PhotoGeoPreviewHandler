@@ -30,16 +30,18 @@ internal static class ThumbnailService
             return thumbnailPath;
         }
 
+        Directory.CreateDirectory(CacheDirectory);
+        var tempPath = Path.Combine(CacheDirectory, $"{hash}.{Guid.NewGuid():N}.tmp");
         try
         {
-            Directory.CreateDirectory(CacheDirectory);
             using var image = Image.Load(filePath);
             image.Mutate(context => context.Resize(new ResizeOptions
             {
                 Size = new Size(MaxThumbnailSize, MaxThumbnailSize),
                 Mode = ResizeMode.Max
             }));
-            image.Save(thumbnailPath, new JpegEncoder { Quality = 80 });
+            image.Save(tempPath, new JpegEncoder { Quality = 80 });
+            File.Move(tempPath, thumbnailPath, overwrite: true);
             return thumbnailPath;
         }
         catch (UnauthorizedAccessException ex)
@@ -62,7 +64,36 @@ internal static class ThumbnailService
         {
             AppLog.Error($"Failed to cache thumbnail: {filePath}", ex);
         }
+        finally
+        {
+            TryDelete(tempPath);
+        }
 
         return File.Exists(thumbnailPath) ? thumbnailPath : null;
+    }
+
+    private static void TryDelete(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+        catch (IOException)
+        {
+        }
+        catch (NotSupportedException)
+        {
+        }
     }
 }
