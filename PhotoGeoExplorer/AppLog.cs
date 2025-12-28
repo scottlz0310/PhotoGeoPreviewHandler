@@ -32,6 +32,12 @@ internal static class AppLog
 
     internal static string LogFilePath => LogPath;
 
+    internal static void Reset()
+    {
+        TryDelete(LogPath);
+        TryDelete(FallbackLogPath);
+    }
+
     private static void Write(string level, string message, Exception? exception)
     {
         var timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
@@ -53,6 +59,32 @@ internal static class AppLog
         }
 
         TryWrite(FallbackLogDirectory, FallbackLogPath, payload);
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+        catch (IOException)
+        {
+        }
+        catch (ArgumentException)
+        {
+        }
+        catch (NotSupportedException)
+        {
+        }
+        catch (System.Security.SecurityException)
+        {
+        }
     }
 
     private static bool TryWrite(string directory, string path, string payload)
