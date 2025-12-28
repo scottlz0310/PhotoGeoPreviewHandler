@@ -195,7 +195,12 @@
                     IsChecked="{Binding ShowImagesOnly, Mode=TwoWay}"
                     Checked="OnFiltersChanged"
                     Unchecked="OnFiltersChanged" />
-                <Grid Grid.Row="5" Margin="0,8,0,0">
+                <Grid
+                    Grid.Row="5"
+                    Margin="0,8,0,0"
+                    AllowDrop="True"
+                    DragOver="OnFileListDragOver"
+                    Drop="OnFileListDrop">
                     <ListView
                         ItemsSource="{Binding Items}"
                         SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
@@ -203,6 +208,9 @@
                         IsItemClickEnabled="True"
                         ItemClick="OnFileItemClicked"
                         ItemTemplate="{StaticResource ListItemTemplate}"
+                        AllowDrop="True"
+                        DragOver="OnFileListDragOver"
+                        Drop="OnFileListDrop"
                         Visibility="{Binding ListViewVisibility}" />
                     <GridView
                         ItemsSource="{Binding Items}"
@@ -211,6 +219,9 @@
                         IsItemClickEnabled="True"
                         ItemClick="OnFileItemClicked"
                         ItemTemplate="{StaticResource IconItemTemplate}"
+                        AllowDrop="True"
+                        DragOver="OnFileListDragOver"
+                        Drop="OnFileListDrop"
                         Visibility="{Binding IconViewVisibility}" />
                     <ListView
                         ItemsSource="{Binding Items}"
@@ -220,6 +231,9 @@
                         ItemClick="OnFileItemClicked"
                         ItemTemplate="{StaticResource DetailsItemTemplate}"
                         HorizontalContentAlignment="Stretch"
+                        AllowDrop="True"
+                        DragOver="OnFileListDragOver"
+                        Drop="OnFileListDrop"
                         Visibility="{Binding DetailsViewVisibility}" />
                     <Border
                         Padding="16"
@@ -227,6 +241,9 @@
                         Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
+                        AllowDrop="True"
+                        DragOver="OnFileListDragOver"
+                        Drop="OnFileListDrop"
                         Visibility="{Binding StatusVisibility}">
                         <StackPanel Spacing="8" MaxWidth="320" HorizontalAlignment="Center">
                             <SymbolIcon

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -331,6 +332,21 @@ internal sealed class MainViewModel : BindableBase
     public void SelectPrevious()
     {
         SelectRelative(-1);
+    }
+
+    public void SelectItemByPath(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return;
+        }
+
+        var match = Items.FirstOrDefault(item =>
+            string.Equals(item.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+        if (match is not null)
+        {
+            SelectedItem = match;
+        }
     }
 
     public async Task LoadFolderAsync(string folderPath)

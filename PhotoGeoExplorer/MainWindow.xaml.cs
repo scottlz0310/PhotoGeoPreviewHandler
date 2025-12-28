@@ -19,6 +19,7 @@ using PhotoGeoExplorer.Models;
 using PhotoGeoExplorer.Services;
 using PhotoGeoExplorer.ViewModels;
 using System.ComponentModel;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
 using Windows.Foundation;
 using Windows.Storage;
@@ -719,6 +720,64 @@ public sealed partial class MainWindow : Window
         }
 
         await _viewModel.LoadFolderAsync(folderPath).ConfigureAwait(true);
+    }
+
+    private void OnFileListDragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = e.DataView.Contains(StandardDataFormats.StorageItems)
+            ? DataPackageOperation.Copy
+            : DataPackageOperation.None;
+        e.Handled = true;
+    }
+
+    private async void OnFileListDrop(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(StandardDataFormats.StorageItems))
+        {
+            return;
+        }
+
+        var items = await e.DataView.GetStorageItemsAsync();
+        if (items is null || items.Count == 0)
+        {
+            return;
+        }
+
+        StorageFolder? folder = null;
+        StorageFile? firstFile = null;
+        foreach (var item in items)
+        {
+            if (item is StorageFolder droppedFolder)
+            {
+                folder = droppedFolder;
+                break;
+            }
+
+            if (firstFile is null && item is StorageFile droppedFile)
+            {
+                firstFile = droppedFile;
+            }
+        }
+
+        if (folder is not null)
+        {
+            await _viewModel.LoadFolderAsync(folder.Path).ConfigureAwait(true);
+            return;
+        }
+
+        if (firstFile is null)
+        {
+            return;
+        }
+
+        var directory = Path.GetDirectoryName(firstFile.Path);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return;
+        }
+
+        await _viewModel.LoadFolderAsync(directory).ConfigureAwait(true);
+        _viewModel.SelectItemByPath(firstFile.Path);
     }
 
     private async void OnFileItemClicked(object sender, ItemClickEventArgs e)
