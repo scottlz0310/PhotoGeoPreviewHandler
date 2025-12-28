@@ -13,6 +13,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media.Imaging;
 using PhotoGeoExplorer.Models;
 using PhotoGeoExplorer.Services;
@@ -41,6 +42,7 @@ public sealed partial class MainWindow : Window
     private GridLength _storedDetailWidth;
     private GridLength _storedFileBrowserWidth;
     private GridLength _storedMapRowHeight;
+    private GridLength _storedMapSplitterHeight;
     private GridLength _storedSplitterWidth;
 
     public MainWindow()
@@ -405,6 +407,7 @@ public sealed partial class MainWindow : Window
             _storedSplitterWidth = SplitterColumn.Width;
             _storedDetailWidth = DetailColumn.Width;
             _storedMapRowHeight = MapRow.Height;
+            _storedMapSplitterHeight = MapSplitterRow.Height;
             _layoutStored = true;
         }
 
@@ -415,8 +418,11 @@ public sealed partial class MainWindow : Window
             SplitterColumn.Width = new GridLength(0);
             DetailColumn.Width = new GridLength(1, GridUnitType.Star);
             MapRow.Height = new GridLength(0);
+            MapSplitterRow.Height = new GridLength(0);
             FileBrowserPane.Visibility = Visibility.Collapsed;
             MapPane.Visibility = Visibility.Collapsed;
+            MainSplitter.Visibility = Visibility.Collapsed;
+            MapRowSplitter.Visibility = Visibility.Collapsed;
         }
         else
         {
@@ -424,12 +430,51 @@ public sealed partial class MainWindow : Window
             SplitterColumn.Width = _storedSplitterWidth;
             DetailColumn.Width = _storedDetailWidth;
             MapRow.Height = _storedMapRowHeight;
+            MapSplitterRow.Height = _storedMapSplitterHeight;
             FileBrowserPane.Visibility = Visibility.Visible;
             MapPane.Visibility = Visibility.Visible;
+            MainSplitter.Visibility = Visibility.Visible;
+            MapRowSplitter.Visibility = Visibility.Visible;
         }
 
         _previewFitToWindow = true;
         ApplyPreviewFit();
+    }
+
+    private void OnMainSplitterDragDelta(object sender, DragDeltaEventArgs e)
+    {
+        var totalWidth = MainContentGrid.ActualWidth - SplitterColumn.ActualWidth;
+        if (totalWidth <= 0)
+        {
+            return;
+        }
+
+        const double minLeft = 220;
+        const double minRight = 320;
+        var targetLeft = FileBrowserColumn.ActualWidth + e.HorizontalChange;
+        var maxLeft = totalWidth - minRight;
+        var clampedLeft = Math.Clamp(targetLeft, minLeft, maxLeft);
+
+        FileBrowserColumn.Width = new GridLength(clampedLeft, GridUnitType.Pixel);
+        DetailColumn.Width = new GridLength(1, GridUnitType.Star);
+    }
+
+    private void OnMapSplitterDragDelta(object sender, DragDeltaEventArgs e)
+    {
+        var totalHeight = DetailPane.ActualHeight - MapSplitterRow.ActualHeight;
+        if (totalHeight <= 0)
+        {
+            return;
+        }
+
+        const double minPreview = 200;
+        const double minMap = 200;
+        var targetPreview = PreviewRow.ActualHeight + e.VerticalChange;
+        var maxPreview = totalHeight - minMap;
+        var clampedPreview = Math.Clamp(targetPreview, minPreview, maxPreview);
+
+        PreviewRow.Height = new GridLength(clampedPreview, GridUnitType.Pixel);
+        MapRow.Height = new GridLength(1, GridUnitType.Star);
     }
 
     private async void OnNavigateHomeClicked(object sender, RoutedEventArgs e)

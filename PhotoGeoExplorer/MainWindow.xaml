@@ -2,15 +2,18 @@
     x:Class="PhotoGeoExplorer.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mapsui="using:Mapsui.UI.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives"
     mc:Ignorable="d"
     Title="PhotoGeoExplorer">
     <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <MenuBar>
@@ -20,7 +23,7 @@
             <MenuBarItem Title="Help" />
         </MenuBar>
 
-        <Grid Grid.Row="1">
+        <Grid x:Name="MainContentGrid" Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="FileBrowserColumn" Width="2*" />
                 <ColumnDefinition x:Name="SplitterColumn" Width="Auto" />
@@ -131,11 +134,21 @@
                 </Grid>
             </Grid>
 
+            <primitives:Thumb
+                x:Name="MainSplitter"
+                Grid.Column="1"
+                Width="6"
+                Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                DragDelta="OnMainSplitterDragDelta"
+                IsTabStop="False" />
+
             <Grid x:Name="DetailPane" Grid.Column="2" Padding="12">
                 <Grid.RowDefinitions>
-                    <RowDefinition x:Name="PreviewRow" Height="*" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition x:Name="MapRow" Height="*" />
+                    <RowDefinition x:Name="PreviewRow" Height="*" MinHeight="200" />
+                    <RowDefinition x:Name="MapSplitterRow" Height="Auto" />
+                    <RowDefinition x:Name="MapRow" Height="*" MinHeight="200" />
                 </Grid.RowDefinitions>
 
                 <Grid Grid.Row="0">
@@ -214,6 +227,16 @@
                     </Border>
                 </Grid>
 
+                <primitives:Thumb
+                    x:Name="MapRowSplitter"
+                    Grid.Row="1"
+                    Height="6"
+                    Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Center"
+                    DragDelta="OnMapSplitterDragDelta"
+                    IsTabStop="False" />
+
                 <Grid x:Name="MapPane" Grid.Row="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -234,6 +257,30 @@
                     </Grid>
                 </Grid>
             </Grid>
+        </Grid>
+
+        <Grid Grid.Row="2" Padding="12,6,12,8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <controls:InfoBar
+                Grid.Row="0"
+                IsOpen="{Binding IsNotificationOpen, Mode=TwoWay}"
+                Message="{Binding NotificationMessage}"
+                Severity="{Binding NotificationSeverity}"
+                IsClosable="True" />
+            <Border
+                Grid.Row="1"
+                Margin="0,6,0,0"
+                Padding="8,4"
+                Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                CornerRadius="4">
+                <TextBlock
+                    Text="{Binding StatusBarText}"
+                    TextTrimming="CharacterEllipsis"
+                    VerticalAlignment="Center" />
+            </Border>
         </Grid>
     </Grid>
 </Window>

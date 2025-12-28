@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using PhotoGeoExplorer.Models;
 using PhotoGeoExplorer.Services;
@@ -25,6 +26,10 @@ internal sealed class MainViewModel : BindableBase
     private string? _searchText;
     private string? _metadataSummary;
     private Visibility _metadataVisibility = Visibility.Collapsed;
+    private string? _statusBarText;
+    private string? _notificationMessage;
+    private InfoBarSeverity _notificationSeverity = InfoBarSeverity.Informational;
+    private bool _isNotificationOpen;
 
     public MainViewModel(FileSystemService fileSystemService)
     {
@@ -107,6 +112,30 @@ internal sealed class MainViewModel : BindableBase
     {
         get => _metadataVisibility;
         private set => SetProperty(ref _metadataVisibility, value);
+    }
+
+    public string? StatusBarText
+    {
+        get => _statusBarText;
+        private set => SetProperty(ref _statusBarText, value);
+    }
+
+    public string? NotificationMessage
+    {
+        get => _notificationMessage;
+        private set => SetProperty(ref _notificationMessage, value);
+    }
+
+    public InfoBarSeverity NotificationSeverity
+    {
+        get => _notificationSeverity;
+        private set => SetProperty(ref _notificationSeverity, value);
+    }
+
+    public bool IsNotificationOpen
+    {
+        get => _isNotificationOpen;
+        set => SetProperty(ref _isNotificationOpen, value);
     }
 
     public async Task InitializeAsync()
@@ -200,6 +229,7 @@ internal sealed class MainViewModel : BindableBase
             }
 
             SetStatus(Items.Count == 0 ? "No files found." : null);
+            UpdateStatusBar();
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -263,6 +293,7 @@ internal sealed class MainViewModel : BindableBase
         {
             SelectedPreview = null;
             PreviewPlaceholderVisibility = Visibility.Visible;
+            UpdateStatusBar();
             return;
         }
 
@@ -270,18 +301,21 @@ internal sealed class MainViewModel : BindableBase
         {
             SelectedPreview = new BitmapImage(new Uri(item.FilePath));
             PreviewPlaceholderVisibility = Visibility.Collapsed;
+            UpdateStatusBar();
         }
         catch (ArgumentException ex)
         {
             AppLog.Error("Failed to load preview image.", ex);
             SelectedPreview = null;
             PreviewPlaceholderVisibility = Visibility.Visible;
+            UpdateStatusBar();
         }
         catch (UriFormatException ex)
         {
             AppLog.Error("Failed to load preview image.", ex);
             SelectedPreview = null;
             PreviewPlaceholderVisibility = Visibility.Visible;
+            UpdateStatusBar();
         }
     }
 
@@ -357,6 +391,7 @@ internal sealed class MainViewModel : BindableBase
     {
         StatusMessage = message;
         StatusVisibility = string.IsNullOrWhiteSpace(message) ? Visibility.Collapsed : Visibility.Visible;
+        SetNotification(message);
     }
 
     private void SelectRelative(int delta)
@@ -420,5 +455,48 @@ internal sealed class MainViewModel : BindableBase
 
         MetadataSummary = $"{metadata.TakenAtText} | {metadata.CameraSummary}";
         MetadataVisibility = Visibility.Visible;
+    }
+
+    private void UpdateStatusBar()
+    {
+        var folderLabel = string.IsNullOrWhiteSpace(CurrentFolderPath) ? "No folder selected." : CurrentFolderPath;
+        var itemCount = Items.Count;
+        var selectedLabel = SelectedItem is null ? null : $"Selected: {SelectedItem.FileName}";
+        StatusBarText = selectedLabel is null
+            ? $"{folderLabel} | {itemCount} items"
+            : $"{folderLabel} | {itemCount} items | {selectedLabel}";
+    }
+
+    private void SetNotification(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            NotificationMessage = null;
+            IsNotificationOpen = false;
+            NotificationSeverity = InfoBarSeverity.Informational;
+            return;
+        }
+
+        NotificationMessage = message;
+        NotificationSeverity = GetNotificationSeverity(message);
+        IsNotificationOpen = true;
+    }
+
+    private static InfoBarSeverity GetNotificationSeverity(string message)
+    {
+        if (message.Contains("see log", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("failed", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("denied", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+        {
+            return InfoBarSeverity.Error;
+        }
+
+        if (message.Contains("no files", StringComparison.OrdinalIgnoreCase))
+        {
+            return InfoBarSeverity.Informational;
+        }
+
+        return InfoBarSeverity.Warning;
     }
 }
