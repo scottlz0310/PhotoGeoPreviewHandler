@@ -1,17 +1,27 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using PhotoGeoExplorer.Models;
+using PhotoGeoExplorer.Services;
+using PhotoGeoExplorer.ViewModels;
 using Windows.Graphics;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using Windows.System;
+using WinRT.Interop;
 
 namespace PhotoGeoExplorer;
 
 [SuppressMessage("Design", "CA1515:Consider making public types internal")]
 public sealed partial class MainWindow : Window
 {
+    private readonly MainViewModel _viewModel;
     private bool _mapInitialized;
     private WebView2? _mapWebView;
     private bool _windowSized;
@@ -19,6 +29,8 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        _viewModel = new MainViewModel(new FileSystemService());
+        RootGrid.DataContext = _viewModel;
         AppLog.Info("MainWindow constructed.");
         Activated += OnActivated;
     }
@@ -33,7 +45,8 @@ public sealed partial class MainWindow : Window
         EnsureWindowSize();
         _mapInitialized = true;
         AppLog.Info("MainWindow activated.");
-        await InitializeMapAsync().ConfigureAwait(false);
+        await InitializeMapAsync().ConfigureAwait(true);
+        await _viewModel.InitializeAsync().ConfigureAwait(true);
     }
 
     private void EnsureWindowSize()
@@ -85,7 +98,7 @@ public sealed partial class MainWindow : Window
             MapHost.Children.Clear();
             MapHost.Children.Add(webView);
             _mapWebView = webView;
-            await webView.EnsureCoreWebView2Async();
+            await webView.EnsureCoreWebView2Async().AsTask().ConfigureAwait(true);
             webView.Source = new Uri(indexPath);
             MapStatusText.Visibility = Visibility.Collapsed;
             AppLog.Info("WebView2 initialized.");
@@ -126,5 +139,85 @@ public sealed partial class MainWindow : Window
     {
         MapStatusText.Text = message;
         MapStatusText.Visibility = Visibility.Visible;
+    }
+
+    private async void OnNavigateHomeClicked(object sender, RoutedEventArgs e)
+    {
+        await _viewModel.OpenHomeAsync().ConfigureAwait(true);
+    }
+
+    private async void OnNavigateUpClicked(object sender, RoutedEventArgs e)
+    {
+        await _viewModel.NavigateUpAsync().ConfigureAwait(true);
+    }
+
+    private async void OnRefreshClicked(object sender, RoutedEventArgs e)
+    {
+        await _viewModel.RefreshAsync().ConfigureAwait(true);
+    }
+
+    private async void OnApplyFiltersClicked(object sender, RoutedEventArgs e)
+    {
+        await _viewModel.RefreshAsync().ConfigureAwait(true);
+    }
+
+    private async void OnFiltersChanged(object sender, RoutedEventArgs e)
+    {
+        await _viewModel.RefreshAsync().ConfigureAwait(true);
+    }
+
+    private async void OnOpenFolderClicked(object sender, RoutedEventArgs e)
+    {
+        var picker = new FolderPicker
+        {
+            SuggestedStartLocation = PickerLocationId.PicturesLibrary
+        };
+        picker.FileTypeFilter.Add("*");
+
+        var hwnd = WindowNative.GetWindowHandle(this);
+        InitializeWithWindow.Initialize(picker, hwnd);
+
+        StorageFolder? folder;
+        try
+        {
+            folder = await picker.PickSingleFolderAsync().AsTask().ConfigureAwait(true);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            AppLog.Error("Folder picker failed.", ex);
+            return;
+        }
+        catch (System.Runtime.InteropServices.COMException ex)
+        {
+            AppLog.Error("Folder picker failed.", ex);
+            return;
+        }
+
+        if (folder is null)
+        {
+            return;
+        }
+
+        await _viewModel.LoadFolderAsync(folder.Path).ConfigureAwait(true);
+    }
+
+    private async void OnBreadcrumbItemClicked(BreadcrumbBar sender, BreadcrumbBarItemClickedEventArgs args)
+    {
+        if (args.Item is not BreadcrumbSegment segment)
+        {
+            return;
+        }
+
+        await _viewModel.LoadFolderAsync(segment.FullPath).ConfigureAwait(true);
+    }
+
+    private async void OnSearchKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key != VirtualKey.Enter)
+        {
+            return;
+        }
+
+        await _viewModel.RefreshAsync().ConfigureAwait(true);
     }
 }
