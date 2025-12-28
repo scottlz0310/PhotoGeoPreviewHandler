@@ -1,13 +1,14 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using WinRT.Interop;
 using Windows.Graphics;
 
 namespace PhotoGeoExplorer;
 
+[SuppressMessage("Design", "CA1515:Consider making public types internal")]
 public sealed partial class MainWindow : Window
 {
     private bool _mapInitialized;
@@ -30,7 +31,7 @@ public sealed partial class MainWindow : Window
         EnsureWindowSize();
         _mapInitialized = true;
         AppLog.Info("MainWindow activated.");
-        await InitializeMapAsync();
+        await InitializeMapAsync().ConfigureAwait(false);
     }
 
     private void EnsureWindowSize()
@@ -44,12 +45,17 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            var hwnd = WindowNative.GetWindowHandle(this);
-            var windowId = WinRT.Interop.Win32Interop.GetWindowIdFromWindow(hwnd);
-            var appWindow = AppWindow.GetFromWindowId(windowId);
-            appWindow.Resize(new SizeInt32(1200, 800));
+            AppWindow.Resize(new SizeInt32(1200, 800));
         }
-        catch (Exception ex)
+        catch (ArgumentException ex)
+        {
+            AppLog.Error("Failed to set initial window size.", ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            AppLog.Error("Failed to set initial window size.", ex);
+        }
+        catch (System.Runtime.InteropServices.COMException ex)
         {
             AppLog.Error("Failed to set initial window size.", ex);
         }
@@ -71,7 +77,23 @@ public sealed partial class MainWindow : Window
             MapWebView.Source = new Uri(indexPath);
             AppLog.Info("WebView2 initialized.");
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
+        {
+            AppLog.Error("Map WebView2 init failed.", ex);
+        }
+        catch (IOException ex)
+        {
+            AppLog.Error("Map WebView2 init failed.", ex);
+        }
+        catch (System.Runtime.InteropServices.COMException ex)
+        {
+            AppLog.Error("Map WebView2 init failed.", ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            AppLog.Error("Map WebView2 init failed.", ex);
+        }
+        catch (UriFormatException ex)
         {
             AppLog.Error("Map WebView2 init failed.", ex);
         }

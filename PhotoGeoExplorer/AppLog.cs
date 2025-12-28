@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Globalization;
 
 namespace PhotoGeoExplorer;
 
@@ -33,7 +34,7 @@ internal static class AppLog
 
     private static void Write(string level, string message, Exception? exception)
     {
-        var timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff zzz");
+        var timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
         var builder = new StringBuilder();
         builder.Append(timestamp).Append(' ').Append(level).Append(' ').Append(message);
         if (exception is not null)
@@ -66,7 +67,23 @@ internal static class AppLog
 
             return true;
         }
-        catch
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (NotSupportedException)
+        {
+            return false;
+        }
+        catch (System.Security.SecurityException)
         {
             return false;
         }

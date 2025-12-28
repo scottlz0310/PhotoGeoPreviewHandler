@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml;
 
 namespace PhotoGeoExplorer;
 
-public static class Program
+internal static class Program
 {
     [STAThread]
     public static void Main(string[] args)
@@ -14,10 +14,30 @@ public static class Program
 
         try
         {
-            Microsoft.WindowsAppRuntime.Bootstrap.Initialize(0x00010006);
+            Microsoft.Windows.ApplicationModel.DynamicDependency.Bootstrap.Initialize(0x00010006);
             AppLog.Info("Windows App Runtime bootstrap initialized.");
         }
-        catch (Exception ex)
+        catch (BadImageFormatException ex)
+        {
+            AppLog.Error("Windows App SDK bootstrap failed.", ex);
+        }
+        catch (DllNotFoundException ex)
+        {
+            AppLog.Error("Windows App SDK bootstrap failed.", ex);
+        }
+        catch (EntryPointNotFoundException ex)
+        {
+            AppLog.Error("Windows App SDK bootstrap failed.", ex);
+        }
+        catch (FileNotFoundException ex)
+        {
+            AppLog.Error("Windows App SDK bootstrap failed.", ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            AppLog.Error("Windows App SDK bootstrap failed.", ex);
+        }
+        catch (UnauthorizedAccessException ex)
         {
             AppLog.Error("Windows App SDK bootstrap failed.", ex);
         }
@@ -33,7 +53,17 @@ public static class Program
                 _ = new App();
             });
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
+        {
+            AppLog.Error("Application.Start failed.", ex);
+            throw;
+        }
+        catch (System.Runtime.InteropServices.COMException ex)
+        {
+            AppLog.Error("Application.Start failed.", ex);
+            throw;
+        }
+        catch (UnauthorizedAccessException ex)
         {
             AppLog.Error("Application.Start failed.", ex);
             throw;
@@ -42,10 +72,30 @@ public static class Program
         {
             try
             {
-                Microsoft.WindowsAppRuntime.Bootstrap.Shutdown();
+                Microsoft.Windows.ApplicationModel.DynamicDependency.Bootstrap.Shutdown();
                 AppLog.Info("Windows App Runtime bootstrap shutdown.");
             }
-            catch (Exception ex)
+            catch (BadImageFormatException ex)
+            {
+                AppLog.Error("Windows App SDK bootstrap shutdown failed.", ex);
+            }
+            catch (DllNotFoundException ex)
+            {
+                AppLog.Error("Windows App SDK bootstrap shutdown failed.", ex);
+            }
+            catch (EntryPointNotFoundException ex)
+            {
+                AppLog.Error("Windows App SDK bootstrap shutdown failed.", ex);
+            }
+            catch (FileNotFoundException ex)
+            {
+                AppLog.Error("Windows App SDK bootstrap shutdown failed.", ex);
+            }
+            catch (InvalidOperationException ex)
+            {
+                AppLog.Error("Windows App SDK bootstrap shutdown failed.", ex);
+            }
+            catch (UnauthorizedAccessException ex)
             {
                 AppLog.Error("Windows App SDK bootstrap shutdown failed.", ex);
             }

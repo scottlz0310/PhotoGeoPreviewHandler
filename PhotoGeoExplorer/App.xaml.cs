@@ -1,9 +1,11 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 
 namespace PhotoGeoExplorer;
 
+[SuppressMessage("Design", "CA1515:Consider making public types internal")]
 public partial class App : Application
 {
     private Window? _window;
