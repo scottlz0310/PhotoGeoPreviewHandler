@@ -18,6 +18,7 @@ internal sealed class PhotoListItem
     public string FileName => Item.FileName;
     public string SizeText => Item.SizeText;
     public string ModifiedAtText => Item.ModifiedAtText;
+    public string ResolutionText => Item.ResolutionText;
     public bool IsFolder => Item.IsFolder;
     public BitmapImage? Thumbnail { get; }
     public Visibility ThumbnailVisibility => IsFolder ? Visibility.Collapsed : Visibility.Visible;

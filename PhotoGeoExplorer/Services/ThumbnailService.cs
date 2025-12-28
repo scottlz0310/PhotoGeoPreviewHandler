@@ -17,9 +17,12 @@ internal static class ThumbnailService
         "Cache",
         "Thumbnails");
 
-    public static string? GetOrCreateThumbnailPath(string filePath, DateTime lastWriteUtc)
+    public static string? GetOrCreateThumbnailPath(string filePath, DateTime lastWriteUtc, out int? width, out int? height)
     {
         ArgumentNullException.ThrowIfNull(filePath);
+
+        width = null;
+        height = null;
 
         var cacheKey = $"{filePath}|{lastWriteUtc.Ticks}";
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(cacheKey)));
@@ -27,6 +30,7 @@ internal static class ThumbnailService
 
         if (File.Exists(thumbnailPath))
         {
+            TryGetImageSize(filePath, out width, out height);
             return thumbnailPath;
         }
 
@@ -35,6 +39,8 @@ internal static class ThumbnailService
         try
         {
             using var image = Image.Load(filePath);
+            width = image.Width;
+            height = image.Height;
             image.Mutate(context => context.Resize(new ResizeOptions
             {
                 Size = new Size(MaxThumbnailSize, MaxThumbnailSize),
@@ -70,6 +76,39 @@ internal static class ThumbnailService
         }
 
         return File.Exists(thumbnailPath) ? thumbnailPath : null;
+    }
+
+    private static void TryGetImageSize(string filePath, out int? width, out int? height)
+    {
+        width = null;
+        height = null;
+
+        try
+        {
+            var info = Image.Identify(filePath);
+            if (info is null)
+            {
+                return;
+            }
+
+            width = info.Width;
+            height = info.Height;
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+        catch (IOException)
+        {
+        }
+        catch (NotSupportedException)
+        {
+        }
+        catch (UnknownImageFormatException)
+        {
+        }
+        catch (ImageProcessingException)
+        {
+        }
     }
 
     private static void TryDelete(string path)

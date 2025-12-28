@@ -6,7 +6,14 @@ namespace PhotoGeoExplorer.Models;
 
 internal sealed class PhotoItem
 {
-    public PhotoItem(string filePath, long sizeBytes, DateTimeOffset modifiedAt, bool isFolder, string? thumbnailPath = null)
+    public PhotoItem(
+        string filePath,
+        long sizeBytes,
+        DateTimeOffset modifiedAt,
+        bool isFolder,
+        string? thumbnailPath = null,
+        int? pixelWidth = null,
+        int? pixelHeight = null)
     {
         FilePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
         FileName = Path.GetFileName(filePath);
@@ -14,6 +21,8 @@ internal sealed class PhotoItem
         ModifiedAt = modifiedAt;
         IsFolder = isFolder;
         ThumbnailPath = thumbnailPath;
+        PixelWidth = pixelWidth;
+        PixelHeight = pixelHeight;
     }
 
     public string FilePath { get; }
@@ -22,9 +31,12 @@ internal sealed class PhotoItem
     public DateTimeOffset ModifiedAt { get; }
     public bool IsFolder { get; }
     public string? ThumbnailPath { get; }
+    public int? PixelWidth { get; }
+    public int? PixelHeight { get; }
 
     public string SizeText => IsFolder ? string.Empty : FormatSize(SizeBytes);
     public string ModifiedAtText => ModifiedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture);
+    public string ResolutionText => FormatResolution(PixelWidth, PixelHeight, IsFolder);
 
     private static string FormatSize(long sizeBytes)
     {
@@ -39,5 +51,20 @@ internal sealed class PhotoItem
         }
 
         return string.Format(CultureInfo.CurrentCulture, "{0:0.##} {1}", size, units[unitIndex]);
+    }
+
+    private static string FormatResolution(int? width, int? height, bool isFolder)
+    {
+        if (isFolder || width is null || height is null)
+        {
+            return string.Empty;
+        }
+
+        if (width <= 0 || height <= 0)
+        {
+            return string.Empty;
+        }
+
+        return string.Format(CultureInfo.CurrentCulture, "{0} x {1}", width, height);
     }
 }

@@ -27,6 +27,9 @@ internal sealed class MainViewModel : BindableBase
     private string? _metadataSummary;
     private Visibility _metadataVisibility = Visibility.Collapsed;
     private string? _statusBarText;
+    private string? _statusBarLocationGlyph;
+    private Visibility _statusBarLocationVisibility = Visibility.Collapsed;
+    private string? _statusBarLocationTooltip;
     private string? _notificationMessage;
     private InfoBarSeverity _notificationSeverity = InfoBarSeverity.Informational;
     private bool _isNotificationOpen;
@@ -234,6 +237,24 @@ internal sealed class MainViewModel : BindableBase
     {
         get => _statusBarText;
         private set => SetProperty(ref _statusBarText, value);
+    }
+
+    public string? StatusBarLocationGlyph
+    {
+        get => _statusBarLocationGlyph;
+        private set => SetProperty(ref _statusBarLocationGlyph, value);
+    }
+
+    public Visibility StatusBarLocationVisibility
+    {
+        get => _statusBarLocationVisibility;
+        private set => SetProperty(ref _statusBarLocationVisibility, value);
+    }
+
+    public string? StatusBarLocationTooltip
+    {
+        get => _statusBarLocationTooltip;
+        private set => SetProperty(ref _statusBarLocationTooltip, value);
     }
 
     public string? NotificationMessage
@@ -469,6 +490,7 @@ internal sealed class MainViewModel : BindableBase
 
             SelectedMetadata = metadata;
             SetMetadataSummary(metadata, hasSelection: true);
+            UpdateStatusBar();
         }
         catch (OperationCanceledException)
         {
@@ -649,9 +671,48 @@ internal sealed class MainViewModel : BindableBase
         var folderLabel = string.IsNullOrWhiteSpace(CurrentFolderPath) ? "No folder selected." : CurrentFolderPath;
         var itemCount = Items.Count;
         var selectedLabel = SelectedItem is null ? null : $"Selected: {SelectedItem.FileName}";
-        StatusBarText = selectedLabel is null
+        var resolutionLabel = SelectedItem is null || SelectedItem.IsFolder ? null : SelectedItem.ResolutionText;
+
+        var statusText = selectedLabel is null
             ? $"{folderLabel} | {itemCount} items"
             : $"{folderLabel} | {itemCount} items | {selectedLabel}";
+        if (!string.IsNullOrWhiteSpace(resolutionLabel))
+        {
+            statusText = $"{statusText} | {resolutionLabel}";
+        }
+
+        StatusBarText = statusText;
+        UpdateStatusBarLocation();
+    }
+
+    private void UpdateStatusBarLocation()
+    {
+        if (SelectedItem is null || SelectedItem.IsFolder)
+        {
+            StatusBarLocationVisibility = Visibility.Collapsed;
+            StatusBarLocationGlyph = null;
+            StatusBarLocationTooltip = null;
+            return;
+        }
+
+        if (SelectedMetadata?.HasLocation == true)
+        {
+            StatusBarLocationVisibility = Visibility.Visible;
+            StatusBarLocationGlyph = "\uE707";
+            StatusBarLocationTooltip = "GPS available";
+        }
+        else if (SelectedMetadata is null)
+        {
+            StatusBarLocationVisibility = Visibility.Collapsed;
+            StatusBarLocationGlyph = null;
+            StatusBarLocationTooltip = null;
+        }
+        else
+        {
+            StatusBarLocationVisibility = Visibility.Visible;
+            StatusBarLocationGlyph = "\uE711";
+            StatusBarLocationTooltip = "GPS not found";
+        }
     }
 
     private void SetNotification(string? message)

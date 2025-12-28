@@ -66,12 +66,27 @@ internal sealed class FileSystemService
 
             var info = new FileInfo(path);
             string? thumbnailPath = null;
+            int? pixelWidth = null;
+            int? pixelHeight = null;
             if (IsImage(info.FullName))
             {
-                thumbnailPath = ThumbnailService.GetOrCreateThumbnailPath(info.FullName, info.LastWriteTimeUtc);
+                thumbnailPath = ThumbnailService.GetOrCreateThumbnailPath(
+                    info.FullName,
+                    info.LastWriteTimeUtc,
+                    out var width,
+                    out var height);
+                pixelWidth = width;
+                pixelHeight = height;
             }
 
-            files.Add(new PhotoItem(info.FullName, info.Length, info.LastWriteTime, isFolder: false, thumbnailPath));
+            files.Add(new PhotoItem(
+                info.FullName,
+                info.Length,
+                info.LastWriteTime,
+                isFolder: false,
+                thumbnailPath,
+                pixelWidth,
+                pixelHeight));
         }
 
         directories.Sort((left, right) => string.Compare(left.FileName, right.FileName, StringComparison.OrdinalIgnoreCase));

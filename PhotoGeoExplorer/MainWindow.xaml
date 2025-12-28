@@ -61,18 +61,19 @@
                     <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" />
                 </StackPanel>
             </DataTemplate>
-            <DataTemplate x:Key="DetailsItemTemplate">
-                <Grid Margin="0,0,0,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Border
-                        Width="56"
-                        Height="56"
-                        CornerRadius="6"
+        <DataTemplate x:Key="DetailsItemTemplate">
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Width="56"
+                    Height="56"
+                    CornerRadius="6"
                         Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
                         <Grid>
                             <Image
@@ -94,19 +95,24 @@
                         Text="{Binding FileName}"
                         TextTrimming="CharacterEllipsis"
                         VerticalAlignment="Center" />
-                    <TextBlock
-                        Grid.Column="2"
-                        Text="{Binding ModifiedAtText}"
-                        Opacity="0.7"
-                        VerticalAlignment="Center" />
-                    <TextBlock
-                        Grid.Column="3"
-                        Text="{Binding SizeText}"
-                        Opacity="0.7"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center" />
-                </Grid>
-            </DataTemplate>
+                <TextBlock
+                    Grid.Column="2"
+                    Text="{Binding ModifiedAtText}"
+                    Opacity="0.7"
+                    VerticalAlignment="Center" />
+                <TextBlock
+                    Grid.Column="3"
+                    Text="{Binding ResolutionText}"
+                    Opacity="0.7"
+                    VerticalAlignment="Center" />
+                <TextBlock
+                    Grid.Column="4"
+                    Text="{Binding SizeText}"
+                    Opacity="0.7"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center" />
+            </Grid>
+        </DataTemplate>
         </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -430,10 +436,20 @@
                 Padding="8,4"
                 Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                 CornerRadius="4">
-                <TextBlock
-                    Text="{Binding StatusBarText}"
-                    TextTrimming="CharacterEllipsis"
-                    VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <FontIcon
+                        Glyph="{Binding StatusBarLocationGlyph}"
+                        FontFamily="Segoe MDL2 Assets"
+                        FontSize="16"
+                        Visibility="{Binding StatusBarLocationVisibility}"
+                        Width="16"
+                        Height="16"
+                        ToolTipService.ToolTip="{Binding StatusBarLocationTooltip}" />
+                    <TextBlock
+                        Text="{Binding StatusBarText}"
+                        TextTrimming="CharacterEllipsis"
+                        VerticalAlignment="Center" />
+                </StackPanel>
             </Border>
         </Grid>
     </Grid>
