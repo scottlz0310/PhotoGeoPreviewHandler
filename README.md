@@ -66,11 +66,19 @@ lefthook install
 
 ## リリース成果物
 
-タグの push (例: `v0.1.0`) を契機に、`win-x64` 向けの署名済み MSIX インストーラーを作成します。
+タグの push (例: `v0.1.0`) を契機に、`win-x64` 向けの MSI インストーラーを作成します。
 
-## インストール/アンインストール
+## MSI インストール
 
-配布済み MSIX と CER を同じフォルダ（カレントディレクトリまたは `scripts/`）に置き、次のスクリプトで導入できます。
+配布済み MSI を実行してインストールしてください。
+
+```powershell
+msiexec /i PhotoGeoExplorer.msi
+```
+
+## MSIX (試験的)
+
+MSIX を使う場合は、証明書の信頼登録が必要です。配布済み MSIX と CER を同じフォルダ（カレントディレクトリまたは `scripts/`）に置き、次のスクリプトで導入できます。
 
 ```powershell
 ./scripts/install.ps1
@@ -83,15 +91,6 @@ lefthook install
 ```
 
 管理者権限で LocalMachine にインポートする場合は `-Machine` を付けます。
-
-## MSIX 署名 (CI)
-
-MSIX は署名が必須です。GitHub Actions で署名する場合は、以下の Secrets を設定してください。
-
-- `MSIX_CERT_BASE64`: PFX を Base64 した文字列
-- `MSIX_CERT_PASSWORD`: PFX のパスワード
-
-`PhotoGeoExplorer/Package.appxmanifest` の `Identity/@Publisher` は、証明書の Subject (例: `CN=PhotoGeoExplorer`) と一致させる必要があります。
 
 ## ライセンス
 

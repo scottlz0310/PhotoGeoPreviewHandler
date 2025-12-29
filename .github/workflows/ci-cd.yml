@@ -85,50 +85,13 @@ jobs:
       - name: Restore
         run: dotnet restore PhotoGeoExplorer.sln
 
-      - name: Prepare signing certificate
-        shell: pwsh
-        run: |
-          if (-not "${{ secrets.MSIX_CERT_BASE64 }}") {
-            Write-Error "MSIX_CERT_BASE64 is not set."
-            exit 1
-          }
-          if (-not "${{ secrets.MSIX_CERT_PASSWORD }}") {
-            Write-Error "MSIX_CERT_PASSWORD is not set."
-            exit 1
-          }
-          $certPath = Join-Path $env:RUNNER_TEMP "PhotoGeoExplorer.pfx"
-          $certBytes = [System.Convert]::FromBase64String("${{ secrets.MSIX_CERT_BASE64 }}")
-          [System.IO.File]::WriteAllBytes($certPath, $certBytes)
-          "MSIX_CERT_PATH=$certPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          $cerPath = Join-Path $env:RUNNER_TEMP "PhotoGeoExplorer.cer"
-          $flags = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable `
-            -bor [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::PersistKeySet
-          $pfx = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
-            $certBytes,
-            "${{ secrets.MSIX_CERT_PASSWORD }}",
-            $flags)
-          [System.IO.File]::WriteAllBytes($cerPath, $pfx.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
-          "MSIX_CER_PATH=$cerPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-
-      - name: Build signed MSIX
-        run: >
-          dotnet build PhotoGeoExplorer\PhotoGeoExplorer.csproj
-          -c Release
-          -p:Platform=x64
-          -p:WindowsPackageType=MSIX
-          -p:GenerateAppxPackageOnBuild=true
-          -p:AppxPackageSigningEnabled=true
-          -p:PackageCertificateKeyFile="${{ env.MSIX_CERT_PATH }}"
-          -p:PackageCertificatePassword="${{ secrets.MSIX_CERT_PASSWORD }}"
-          -p:GenerateAppInstallerFile=false
-          -p:TreatWarningsAsErrors=true
-          -p:AnalysisLevel=latest
+      - name: Build MSI
+        run: dotnet build PhotoGeoExplorer.Installer\PhotoGeoExplorer.Installer.wixproj -c Release -p:Platform=x64
 
       - name: Collect installer artifacts
         shell: pwsh
         run: |
-          $patterns = @('*.msix', '*.msixbundle', '*.appx', '*.appxbundle', '*.appinstaller')
-          $packages = Get-ChildItem -Path PhotoGeoExplorer -Recurse -File -Include $patterns
+          $packages = Get-ChildItem -Path PhotoGeoExplorer.Installer -Recurse -File -Include *.msi
           if (-not $packages) {
             Write-Error "No installer packages found."
             exit 1
@@ -136,9 +99,6 @@ jobs:
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
           foreach ($package in $packages) {
             Copy-Item $package.FullName -Destination artifacts -Force
-          }
-          if ($env:MSIX_CER_PATH -and (Test-Path $env:MSIX_CER_PATH)) {
-            Copy-Item $env:MSIX_CER_PATH -Destination (Join-Path artifacts "PhotoGeoExplorer.cer") -Force
           }
 
       - name: Upload installer artifacts
