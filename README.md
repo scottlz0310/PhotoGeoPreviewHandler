@@ -68,6 +68,10 @@ lefthook install
 
 タグの push (例: `v0.1.0`) を契機に、`win-x64` 向けの MSI インストーラーを作成します。
 
+## Microsoft Store (将来)
+
+将来的な Microsoft Store 公開の準備項目は `docs/MicrosoftStore.md` にまとめます。
+
 ## MSI インストール
 
 配布済み MSI を実行してインストールしてください。
