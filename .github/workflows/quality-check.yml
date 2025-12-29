@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -62,7 +62,7 @@ jobs:
       - name: Test
         shell: pwsh
         run: |
-          dotnet test PhotoGeoExplorer.sln `
+          dotnet test PhotoGeoExplorer.Tests/PhotoGeoExplorer.Tests.csproj `
             -c Release `
             -p:Platform=x64 `
             -p:TreatWarningsAsErrors=true `
@@ -73,7 +73,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-quality
           path: TestResults/

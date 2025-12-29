@@ -1,0 +1,102 @@
+name: E2E
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+          dotnet-quality: "preview"
+
+      - name: Restore
+        run: dotnet restore PhotoGeoExplorer.sln
+
+      - name: Build
+        run: dotnet build PhotoGeoExplorer.sln -c Release -p:Platform=x64 -p:TreatWarningsAsErrors=true -p:AnalysisLevel=latest
+
+      - name: Ensure Windows App SDK runtime
+        shell: pwsh
+        run: |
+          $runtime = Get-AppxPackage -Name "Microsoft.WindowsAppRuntime*" -ErrorAction SilentlyContinue
+          if (-not $runtime) {
+            if (Get-Command winget -ErrorAction SilentlyContinue) {
+              winget install --id Microsoft.WindowsAppRuntime.1.8 --accept-source-agreements --accept-package-agreements --silent
+            } else {
+              $uri = "https://aka.ms/windowsappsdk/1.8/latest/Microsoft.WindowsAppRuntime.1.8.x64.msix"
+              $msix = Join-Path $env:RUNNER_TEMP "Microsoft.WindowsAppRuntime.1.8.x64.msix"
+              Invoke-WebRequest -Uri $uri -OutFile $msix
+              Add-AppxPackage -Path $msix
+            }
+          }
+
+      - name: Set display resolution
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Add-Type @"
+          using System;
+          using System.Runtime.InteropServices;
+          public class DisplaySettings {
+            [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
+            public struct DEVMODE {
+              private const int CCHDEVICENAME = 32;
+              private const int CCHFORMNAME = 32;
+              [MarshalAs(UnmanagedType.ByValTStr, SizeConst = CCHDEVICENAME)]
+              public string dmDeviceName;
+              public short dmSpecVersion;
+              public short dmDriverVersion;
+              public short dmSize;
+              public short dmDriverExtra;
+              public int dmFields;
+              public int dmPositionX;
+              public int dmPositionY;
+              public int dmDisplayOrientation;
+              public int dmDisplayFixedOutput;
+              public short dmColor;
+              public short dmDuplex;
+              public short dmYResolution;
+              public short dmTTOption;
+              public short dmCollate;
+              [MarshalAs(UnmanagedType.ByValTStr, SizeConst = CCHFORMNAME)]
+              public string dmFormName;
+              public short dmLogPixels;
+              public int dmBitsPerPel;
+              public int dmPelsWidth;
+              public int dmPelsHeight;
+              public int dmDisplayFlags;
+              public int dmDisplayFrequency;
+              public int dmICMMethod;
+              public int dmICMIntent;
+              public int dmMediaType;
+              public int dmDitherType;
+              public int dmReserved1;
+              public int dmReserved2;
+              public int dmPanningWidth;
+              public int dmPanningHeight;
+            }
+            [DllImport("user32.dll", CharSet=CharSet.Ansi)]
+            public static extern int ChangeDisplaySettings(ref DEVMODE devMode, int flags);
+          }
+"@
+          $dev = New-Object DisplaySettings+DEVMODE
+          $dev.dmSize = [System.Runtime.InteropServices.Marshal]::SizeOf($dev)
+          $dev.dmPelsWidth = 1920
+          $dev.dmPelsHeight = 1080
+          $dev.dmFields = 0x80000 -bor 0x100000
+          [DisplaySettings]::ChangeDisplaySettings([ref]$dev, 0) | Out-Null
+
+      - name: Run E2E tests
+        run: dotnet test PhotoGeoExplorer.E2E/PhotoGeoExplorer.E2E.csproj -c Release
+        env:
+          PHOTO_GEO_EXPLORER_RUN_E2E: "1"

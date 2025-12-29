@@ -88,6 +88,7 @@ public sealed partial class MainWindow : Window, IDisposable
         AppLog.Info("MainWindow activated.");
         await InitializeMapAsync().ConfigureAwait(true);
         await LoadSettingsAsync().ConfigureAwait(true);
+        await ApplyStartupFolderOverrideAsync().ConfigureAwait(true);
         await _viewModel.InitializeAsync().ConfigureAwait(true);
         await UpdateMapFromSelectionAsync().ConfigureAwait(true);
     }
@@ -201,6 +202,77 @@ public sealed partial class MainWindow : Window, IDisposable
         {
             _isApplyingSettings = false;
         }
+    }
+
+    private async Task ApplyStartupFolderOverrideAsync()
+    {
+        var folderPath = GetStartupFolderOverride();
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
+            return;
+        }
+
+        if (!Directory.Exists(folderPath))
+        {
+            AppLog.Error($"Startup folder not found: {folderPath}");
+            return;
+        }
+
+        await _viewModel.LoadFolderAsync(folderPath).ConfigureAwait(true);
+    }
+
+    private static string? GetStartupFolderOverride()
+    {
+        var envPath = Environment.GetEnvironmentVariable("PHOTO_GEO_EXPLORER_E2E_FOLDER");
+        if (!string.IsNullOrWhiteSpace(envPath))
+        {
+            return envPath;
+        }
+
+        var args = Environment.GetCommandLineArgs();
+        for (var i = 1; i < args.Length; i++)
+        {
+            var arg = args[i];
+            if (TryGetOptionValue(arg, "--folder", out var value)
+                || TryGetOptionValue(arg, "/folder", out value)
+                || TryGetOptionValue(arg, "--e2e-folder", out value))
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value;
+                }
+
+                if (i + 1 < args.Length)
+                {
+                    return args[i + 1].Trim('"');
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryGetOptionValue(string argument, string option, out string? value)
+    {
+        value = null;
+        if (!argument.StartsWith(option, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (argument.Length == option.Length)
+        {
+            return true;
+        }
+
+        var separator = argument[option.Length];
+        if (separator is not '=' and not ':')
+        {
+            return false;
+        }
+
+        value = argument[(option.Length + 1)..].Trim('"');
+        return true;
     }
 
     private async Task ApplySettingsAsync(AppSettings settings, bool showLanguagePrompt = false)
