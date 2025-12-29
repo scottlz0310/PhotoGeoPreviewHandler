@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [string]$CertPath,
-    [switch]$KeepCertificate
+    [switch]$KeepCertificate,
+    [switch]$Machine
 )
 
 $ErrorActionPreference = 'Stop'
@@ -19,9 +20,22 @@ function Resolve-CertThumbprints {
         return @($cert.Thumbprint)
     }
 
-    return (Get-ChildItem Cert:\CurrentUser\TrustedPeople |
+    $stores = @(
+        'Cert:\CurrentUser\TrustedPeople',
+        'Cert:\CurrentUser\Root',
+        'Cert:\CurrentUser\TrustedPublisher'
+    )
+    if ($Machine) {
+        $stores += @(
+            'Cert:\LocalMachine\TrustedPeople',
+            'Cert:\LocalMachine\Root',
+            'Cert:\LocalMachine\TrustedPublisher'
+        )
+    }
+
+    return (Get-ChildItem $stores |
         Where-Object { $_.Subject -eq 'CN=PhotoGeoExplorer' } |
-        Select-Object -ExpandProperty Thumbprint)
+        Select-Object -ExpandProperty Thumbprint -Unique)
 }
 
 Get-AppxPackage -Name 'PhotoGeoExplorer' | ForEach-Object {
@@ -35,11 +49,24 @@ if (-not $KeepCertificate) {
         Write-Host "No matching certificate found."
     } else {
         foreach ($thumbprint in $thumbprints) {
-            $items = Get-ChildItem Cert:\CurrentUser\TrustedPeople |
-                Where-Object { $_.Thumbprint -eq $thumbprint }
-            foreach ($item in $items) {
-                Write-Host "Removing certificate: $($item.Subject) ($($item.Thumbprint))"
-                Remove-Item -Path $item.PSPath
+            $stores = @(
+                'Cert:\CurrentUser\TrustedPeople',
+                'Cert:\CurrentUser\Root',
+                'Cert:\CurrentUser\TrustedPublisher'
+            )
+            if ($Machine) {
+                $stores += @(
+                    'Cert:\LocalMachine\TrustedPeople',
+                    'Cert:\LocalMachine\Root',
+                    'Cert:\LocalMachine\TrustedPublisher'
+                )
+            }
+            foreach ($store in $stores) {
+                $items = Get-ChildItem $store | Where-Object { $_.Thumbprint -eq $thumbprint }
+                foreach ($item in $items) {
+                    Write-Host "Removing certificate from $store: $($item.Subject) ($($item.Thumbprint))"
+                    Remove-Item -Path $item.PSPath
+                }
             }
         }
     }

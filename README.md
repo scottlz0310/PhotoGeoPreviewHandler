@@ -82,6 +82,8 @@ lefthook install
 ./scripts/uninstall.ps1
 ```
 
+管理者権限で LocalMachine にインポートする場合は `-Machine` を付けます。
+
 ## MSIX 署名 (CI)
 
 MSIX は署名が必須です。GitHub Actions で署名する場合は、以下の Secrets を設定してください。
