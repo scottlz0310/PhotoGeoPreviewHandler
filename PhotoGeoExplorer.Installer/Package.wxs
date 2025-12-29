@@ -10,7 +10,7 @@
     Compressed="yes">
     <SummaryInformation Description="PhotoGeoExplorer installer" />
     <MajorUpgrade DowngradeErrorMessage="A newer version of PhotoGeoExplorer is already installed." />
-    <MediaTemplate />
+    <MediaTemplate EmbedCab="yes" />
 
     <Icon Id="AppIcon" SourceFile="..\PhotoGeoExplorer\Assets\icon.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />

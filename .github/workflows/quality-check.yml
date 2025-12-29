@@ -51,12 +51,21 @@ jobs:
       - name: Check for outdated packages
         shell: pwsh
         run: |
-          $lines = dotnet list PhotoGeoExplorer.sln package --outdated
-          $lines | ForEach-Object { $_ }
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if ($lines | Select-String -Pattern '^\s*>\s') {
-            Write-Error "Outdated NuGet packages detected. Update packages to the latest versions."
+          $projects = Get-ChildItem -Path . -Recurse -Filter *.csproj |
+            Where-Object { $_.FullName -notmatch '\\\\(bin|obj)\\\\' }
+          if (-not $projects) {
+            Write-Error "No .csproj projects found for package checks."
             exit 1
+          }
+          foreach ($project in $projects) {
+            Write-Host "Checking outdated packages: $($project.FullName)"
+            $lines = dotnet list $project.FullName package --outdated
+            $lines | ForEach-Object { $_ }
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            if ($lines | Select-String -Pattern '^\s*>\s') {
+              Write-Error "Outdated NuGet packages detected. Update packages to the latest versions."
+              exit 1
+            }
           }
 
       - name: Test

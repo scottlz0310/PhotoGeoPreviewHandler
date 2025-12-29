@@ -46,12 +46,21 @@ jobs:
       - name: Check for vulnerable packages
         shell: pwsh
         run: |
-          $lines = dotnet list PhotoGeoExplorer.sln package --vulnerable --include-transitive
-          $lines | ForEach-Object { $_ }
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if ($lines | Select-String -Pattern '^\s*>\s') {
-            Write-Error "Vulnerable NuGet packages detected. Update dependencies before merging."
+          $projects = Get-ChildItem -Path . -Recurse -Filter *.csproj |
+            Where-Object { $_.FullName -notmatch '\\\\(bin|obj)\\\\' }
+          if (-not $projects) {
+            Write-Error "No .csproj projects found for package checks."
             exit 1
+          }
+          foreach ($project in $projects) {
+            Write-Host "Checking vulnerable packages: $($project.FullName)"
+            $lines = dotnet list $project.FullName package --vulnerable --include-transitive
+            $lines | ForEach-Object { $_ }
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            if ($lines | Select-String -Pattern '^\s*>\s') {
+              Write-Error "Vulnerable NuGet packages detected. Update dependencies before merging."
+              exit 1
+            }
           }
 
   dependency-review:
