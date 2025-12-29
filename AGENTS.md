@@ -20,6 +20,12 @@
 - `dotnet format --verify-no-changes PhotoGeoExplorer.sln` でフォーマット確認（CI + lefthook）。
 - `lefthook install` で pre-commit/pre-push を有効化します。
 
+## 開発時の確認サイクル
+- 実行中の `PhotoGeoExplorer` プロセスを終了する
+- `dotnet build PhotoGeoExplorer.sln -c Release -p:Platform=x64` でビルド確認
+- `dotnet run --project PhotoGeoExplorer/PhotoGeoExplorer.csproj -c Release -p:Platform=x64` で起動確認
+- `%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log` に失敗がないことを確認
+
 ## コーディングスタイルと命名規則
 - C# は 4 スペースインデント。`MainWindow.xaml` と `*.cs` の既存ルールに合わせます。
 - 型と公開メンバーは `PascalCase`、ローカル/フィールドは `camelCase`。private フィールドは `_field` 形式。
