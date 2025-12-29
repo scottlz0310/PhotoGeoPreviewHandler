@@ -34,7 +34,7 @@
     <BindPath Include="$(PublishDir)" />
   </ItemGroup>
 
-  <Target Name="PublishApp" BeforeTargets="HarvestDirectory">
+  <Target Name="PublishApp" BeforeTargets="GetHarvestDirectoryContent">
     <Exec Command='dotnet publish "$(AppProject)" -c $(Configuration) -r $(RuntimeIdentifier) -p:Platform=$(Platform) -p:WindowsPackageType=None -p:SelfContained=false -p:PublishDir="$(PublishDir)"' />
   </Target>
 </Project>
