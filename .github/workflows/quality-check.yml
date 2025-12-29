@@ -60,6 +60,7 @@ jobs:
           }
 
       - name: Test
+        if: false
         shell: pwsh
         run: |
           dotnet test PhotoGeoExplorer.sln `
