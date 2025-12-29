@@ -47,6 +47,11 @@ internal static class LocalizationService
 
     private static ResourceLoader? CreateLoader()
     {
+        if (IsTestHost())
+        {
+            return null;
+        }
+
         try
         {
             return new ResourceLoader();
@@ -59,5 +64,17 @@ internal static class LocalizationService
         {
             return null;
         }
+    }
+
+    private static bool IsTestHost()
+    {
+        var name = AppDomain.CurrentDomain.FriendlyName;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        return name.Contains("testhost", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("vstest", StringComparison.OrdinalIgnoreCase);
     }
 }
