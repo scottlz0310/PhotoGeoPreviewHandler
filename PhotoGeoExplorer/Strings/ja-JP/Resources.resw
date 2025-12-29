@@ -90,6 +90,18 @@
   <data name="MenuSettingsLanguageEnglish.Text" xml:space="preserve">
     <value>English</value>
   </data>
+  <data name="MenuSettingsTheme.Text" xml:space="preserve">
+    <value>テーマ</value>
+  </data>
+  <data name="MenuSettingsThemeSystem.Text" xml:space="preserve">
+    <value>システム既定</value>
+  </data>
+  <data name="MenuSettingsThemeLight.Text" xml:space="preserve">
+    <value>ライト</value>
+  </data>
+  <data name="MenuSettingsThemeDark.Text" xml:space="preserve">
+    <value>ダーク</value>
+  </data>
   <data name="MenuSettingsExport.Text" xml:space="preserve">
     <value>設定をエクスポート...</value>
   </data>

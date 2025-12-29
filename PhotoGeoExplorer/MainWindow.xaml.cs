@@ -61,6 +61,7 @@ public sealed partial class MainWindow : Window, IDisposable
     private List<PhotoListItem>? _dragItems;
     private bool _isApplyingSettings;
     private string? _languageOverride;
+    private ThemePreference _themePreference = ThemePreference.System;
 
     public MainWindow()
     {
@@ -210,6 +211,7 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         await ApplyLanguageSettingAsync(settings.Language, showLanguagePrompt).ConfigureAwait(true);
+        ApplyThemePreference(settings.Theme, saveSettings: false);
 
         _viewModel.ShowImagesOnly = settings.ShowImagesOnly;
         _viewModel.FileViewMode = Enum.IsDefined<FileViewMode>(settings.FileViewMode)
@@ -266,7 +268,8 @@ public sealed partial class MainWindow : Window, IDisposable
             LastFolderPath = _viewModel.CurrentFolderPath,
             ShowImagesOnly = _viewModel.ShowImagesOnly,
             FileViewMode = _viewModel.FileViewMode,
-            Language = _languageOverride
+            Language = _languageOverride,
+            Theme = _themePreference
         };
     }
 
@@ -829,6 +832,21 @@ public sealed partial class MainWindow : Window, IDisposable
         await ApplyLanguageSettingAsync(languageTag, showRestartPrompt: true).ConfigureAwait(true);
     }
 
+    private void OnThemeMenuClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioMenuFlyoutItem item || item.Tag is not string tag)
+        {
+            return;
+        }
+
+        if (!Enum.TryParse(tag, ignoreCase: true, out ThemePreference preference))
+        {
+            return;
+        }
+
+        ApplyThemePreference(preference, saveSettings: true);
+    }
+
     private async void OnExportSettingsClicked(object sender, RoutedEventArgs e)
     {
         var file = await PickSettingsSaveFileAsync().ConfigureAwait(true);
@@ -1006,6 +1024,34 @@ public sealed partial class MainWindow : Window, IDisposable
             LocalizationService.GetString("Dialog.LanguageChanged.Detail")).ConfigureAwait(true);
     }
 
+    private void ApplyThemePreference(ThemePreference preference, bool saveSettings)
+    {
+        var changed = _themePreference != preference;
+        _themePreference = preference;
+        ApplyTheme(preference);
+        UpdateThemeMenuChecks(preference);
+
+        if (saveSettings && changed && !_isApplyingSettings)
+        {
+            ScheduleSettingsSave();
+        }
+    }
+
+    private void ApplyTheme(ThemePreference preference)
+    {
+        if (RootGrid is null)
+        {
+            return;
+        }
+
+        RootGrid.RequestedTheme = preference switch
+        {
+            ThemePreference.Light => ElementTheme.Light,
+            ThemePreference.Dark => ElementTheme.Dark,
+            _ => ElementTheme.Default
+        };
+    }
+
     private static string? NormalizeLanguageSetting(string? languageTag)
     {
         if (string.IsNullOrWhiteSpace(languageTag))
@@ -1049,6 +1095,24 @@ public sealed partial class MainWindow : Window, IDisposable
         if (LanguageEnglishMenuItem is not null)
         {
             LanguageEnglishMenuItem.IsChecked = string.Equals(normalized, "en-US", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private void UpdateThemeMenuChecks(ThemePreference preference)
+    {
+        if (ThemeSystemMenuItem is not null)
+        {
+            ThemeSystemMenuItem.IsChecked = preference == ThemePreference.System;
+        }
+
+        if (ThemeLightMenuItem is not null)
+        {
+            ThemeLightMenuItem.IsChecked = preference == ThemePreference.Light;
+        }
+
+        if (ThemeDarkMenuItem is not null)
+        {
+            ThemeDarkMenuItem.IsChecked = preference == ThemePreference.Dark;
         }
     }
 

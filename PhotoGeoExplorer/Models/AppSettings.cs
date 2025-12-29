@@ -8,4 +8,5 @@ internal sealed class AppSettings
     public bool ShowImagesOnly { get; set; } = true;
     public FileViewMode FileViewMode { get; set; } = FileViewMode.Details;
     public string? Language { get; set; }
+    public ThemePreference Theme { get; set; } = ThemePreference.System;
 }

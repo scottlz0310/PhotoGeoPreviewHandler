@@ -9,7 +9,7 @@
     xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives"
     mc:Ignorable="d"
     Title="PhotoGeoExplorer">
-    <Grid x:Name="RootGrid">
+    <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.Resources>
             <DataTemplate x:Key="IconItemTemplate">
                 <StackPanel Width="140" Margin="0,0,8,8" Spacing="6">
@@ -167,6 +167,29 @@
                         GroupName="Language"
                         Click="OnLanguageMenuClicked"
                         x:Uid="MenuSettingsLanguageEnglish" />
+                </MenuFlyoutSubItem>
+                <MenuFlyoutSubItem Text="Theme" x:Uid="MenuSettingsTheme">
+                    <RadioMenuFlyoutItem
+                        x:Name="ThemeSystemMenuItem"
+                        Text="System default"
+                        Tag="System"
+                        GroupName="Theme"
+                        Click="OnThemeMenuClicked"
+                        x:Uid="MenuSettingsThemeSystem" />
+                    <RadioMenuFlyoutItem
+                        x:Name="ThemeLightMenuItem"
+                        Text="Light"
+                        Tag="Light"
+                        GroupName="Theme"
+                        Click="OnThemeMenuClicked"
+                        x:Uid="MenuSettingsThemeLight" />
+                    <RadioMenuFlyoutItem
+                        x:Name="ThemeDarkMenuItem"
+                        Text="Dark"
+                        Tag="Dark"
+                        GroupName="Theme"
+                        Click="OnThemeMenuClicked"
+                        x:Uid="MenuSettingsThemeDark" />
                 </MenuFlyoutSubItem>
                 <MenuFlyoutSeparator />
                 <MenuFlyoutItem Text="Export settings..." Click="OnExportSettingsClicked" x:Uid="MenuSettingsExport" />
