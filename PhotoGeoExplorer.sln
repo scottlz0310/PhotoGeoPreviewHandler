@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhotoGeoExplorer", "PhotoGe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PhotoGeoExplorer.Tests", "PhotoGeoExplorer.Tests\PhotoGeoExplorer.Tests.csproj", "{EF018107-690B-4961-B168-647665ECD1CE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PhotoGeoExplorer.Core", "PhotoGeoExplorer.Core\PhotoGeoExplorer.Core.csproj", "{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -51,6 +53,22 @@ Global
 		{EF018107-690B-4961-B168-647665ECD1CE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EF018107-690B-4961-B168-647665ECD1CE}.Release|x86.ActiveCfg = Release|Any CPU
 		{EF018107-690B-4961-B168-647665ECD1CE}.Release|x86.Build.0 = Release|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Debug|x64.Build.0 = Debug|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Debug|x86.Build.0 = Debug|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Release|x64.ActiveCfg = Release|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Release|x64.Build.0 = Release|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Release|ARM64.Build.0 = Release|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Release|x86.ActiveCfg = Release|Any CPU
+		{3FC22552-F9EC-4C77-9669-4EC5DDE47D73}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

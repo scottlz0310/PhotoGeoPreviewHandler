@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PhotoGeoExplorer\PhotoGeoExplorer.csproj" />
+    <ProjectReference Include="..\PhotoGeoExplorer.Core\PhotoGeoExplorer.Core.csproj" />
   </ItemGroup>
 
 </Project>
