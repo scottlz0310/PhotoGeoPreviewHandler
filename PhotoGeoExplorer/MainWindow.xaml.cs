@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using BruTile.Cache;
 using Mapsui;
@@ -44,6 +45,7 @@ public sealed partial class MainWindow : Window
     private bool _previewFitToWindow = true;
     private bool _previewMaximized;
     private bool _windowSized;
+    private CancellationTokenSource? _mapUpdateCts;
     private GridLength _storedDetailWidth;
     private GridLength _storedFileBrowserWidth;
     private GridLength _storedMapRowHeight;
@@ -192,34 +194,98 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private Task UpdateMapFromSelectionAsync()
+    private async Task UpdateMapFromSelectionAsync()
     {
         if (_map is null || _markerLayer is null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        var selectedItem = _viewModel.SelectedItem;
-        if (selectedItem is null || selectedItem.IsFolder)
+        var previousCts = _mapUpdateCts;
+        _mapUpdateCts = null;
+        if (previousCts is not null)
+        {
+            await previousCts.CancelAsync().ConfigureAwait(true);
+            previousCts.Dispose();
+        }
+
+        var selectedItems = _viewModel.SelectedItems;
+        var imageItems = selectedItems.Where(item => !item.IsFolder).ToList();
+        if (imageItems.Count == 0)
         {
             ClearMapMarkers();
             ShowMapStatus("Select a photo", "Pick an image with GPS data to show it on the map.", Symbol.Map);
-            return Task.CompletedTask;
+            return;
         }
 
-        var metadata = _viewModel.SelectedMetadata;
-        if (metadata?.HasLocation != true
-            || metadata.Latitude is not double latitude
-            || metadata.Longitude is not double longitude)
+        if (imageItems.Count == 1
+            && ReferenceEquals(imageItems[0], _viewModel.SelectedItem)
+            && _viewModel.SelectedMetadata is PhotoMetadata selectedMetadata)
+        {
+            if (selectedMetadata.HasLocation
+                && selectedMetadata.Latitude is double latitude
+                && selectedMetadata.Longitude is double longitude)
+            {
+                SetMapMarker(latitude, longitude, selectedMetadata);
+                HideMapStatus();
+            }
+            else
+            {
+                ClearMapMarkers();
+                ShowMapStatus("Location data not found", "This photo has no GPS information.", Symbol.Map);
+            }
+
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _mapUpdateCts = cts;
+
+        IReadOnlyList<(PhotoListItem Item, PhotoMetadata? Metadata)> metadataItems;
+        try
+        {
+            metadataItems = await LoadSelectionMetadataAsync(imageItems, cts.Token).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (cts.IsCancellationRequested)
+        {
+            return;
+        }
+
+        var points = new List<(double Latitude, double Longitude, PhotoMetadata Metadata)>();
+        foreach (var (item, metadata) in metadataItems)
+        {
+            if (metadata?.HasLocation != true
+                || metadata.Latitude is not double latitude
+                || metadata.Longitude is not double longitude)
+            {
+                continue;
+            }
+
+            points.Add((latitude, longitude, metadata));
+        }
+
+        if (points.Count == 0)
         {
             ClearMapMarkers();
-            ShowMapStatus("Location data not found", "This photo has no GPS information.", Symbol.Map);
-            return Task.CompletedTask;
+            ShowMapStatus("Location data not found", "Selected photos have no GPS information.", Symbol.Map);
+            return;
         }
 
-        SetMapMarker(latitude, longitude, metadata);
+        if (points.Count == 1)
+        {
+            var single = points[0];
+            SetMapMarker(single.Latitude, single.Longitude, single.Metadata);
+            HideMapStatus();
+            return;
+        }
+
+        SetMapMarkers(points);
         HideMapStatus();
-        return Task.CompletedTask;
     }
 
     private void ClearMapMarkers()
@@ -321,6 +387,19 @@ public sealed partial class MainWindow : Window
         }
 
         return Path.Combine(assetsRoot, "red_pin.png");
+    }
+
+    private static async Task<IReadOnlyList<(PhotoListItem Item, PhotoMetadata? Metadata)>> LoadSelectionMetadataAsync(
+        IReadOnlyList<PhotoListItem> items,
+        CancellationToken cancellationToken)
+    {
+        var tasks = items.Select(async item =>
+        {
+            var metadata = await ExifService.GetMetadataAsync(item.FilePath, cancellationToken).ConfigureAwait(true);
+            return (Item: item, Metadata: metadata);
+        });
+
+        return await Task.WhenAll(tasks).ConfigureAwait(true);
     }
 
     private void OnPreviewImageOpened(object sender, RoutedEventArgs e)
@@ -933,7 +1012,67 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void OnFileSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void SetMapMarkers(List<(double Latitude, double Longitude, PhotoMetadata Metadata)> items)
+    {
+        if (_map is null || _markerLayer is null)
+        {
+            return;
+        }
+
+        var features = new List<IFeature>(items.Count);
+        var hasBounds = false;
+        var minX = 0d;
+        var minY = 0d;
+        var maxX = 0d;
+        var maxY = 0d;
+
+        foreach (var item in items)
+        {
+            var position = SphericalMercator.FromLonLat(new MPoint(item.Longitude, item.Latitude));
+            if (!hasBounds)
+            {
+                minX = maxX = position.X;
+                minY = maxY = position.Y;
+                hasBounds = true;
+            }
+            else
+            {
+                minX = Math.Min(minX, position.X);
+                maxX = Math.Max(maxX, position.X);
+                minY = Math.Min(minY, position.Y);
+                maxY = Math.Max(maxY, position.Y);
+            }
+
+            var feature = new PointFeature(position);
+            feature.Styles.Clear();
+            foreach (var style in CreatePinStyles(item.Metadata))
+            {
+                feature.Styles.Add(style);
+            }
+            features.Add(feature);
+        }
+
+        _markerLayer.Features = features;
+        _map.Refresh();
+
+        if (!hasBounds)
+        {
+            return;
+        }
+
+        var spanX = maxX - minX;
+        var spanY = maxY - minY;
+        var padding = Math.Max(spanX, spanY) * 0.1;
+        if (padding <= 0)
+        {
+            padding = 500;
+        }
+
+        var bounds = new MRect(minX - padding, minY - padding, maxX + padding, maxY + padding);
+        _map.Navigator.ZoomToBox(bounds, MBoxFit.Fit, 0, Mapsui.Animations.Easing.CubicOut);
+    }
+
+    private async void OnFileSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (sender is not ListViewBase listView)
         {
@@ -944,6 +1083,7 @@ public sealed partial class MainWindow : Window
             .OfType<PhotoListItem>()
             .ToList();
         _viewModel.UpdateSelection(selected);
+        await UpdateMapFromSelectionAsync().ConfigureAwait(true);
     }
 
     private async void OnSearchKeyDown(object sender, KeyRoutedEventArgs e)
