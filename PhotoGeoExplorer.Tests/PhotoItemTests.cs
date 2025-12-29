@@ -3,41 +3,40 @@ using PhotoGeoExplorer.Models;
 
 namespace PhotoGeoExplorer.Tests;
 
-[TestClass]
 public sealed class PhotoItemTests
 {
-    [TestMethod]
+    [Fact]
     public void SizeTextReturnsEmptyForFolder()
     {
         using var _ = new CultureScope(CultureInfo.InvariantCulture);
         var item = new PhotoItem("C:\\temp\\folder", 2048, DateTimeOffset.UtcNow, isFolder: true);
 
-        Assert.AreEqual(string.Empty, item.SizeText);
+        Assert.Equal(string.Empty, item.SizeText);
     }
 
-    [TestMethod]
+    [Fact]
     public void SizeTextFormatsBytes()
     {
         using var _ = new CultureScope(CultureInfo.InvariantCulture);
         var item = new PhotoItem("C:\\temp\\file.txt", 1024, DateTimeOffset.UtcNow, isFolder: false);
 
-        Assert.AreEqual("1 KB", item.SizeText);
+        Assert.Equal("1 KB", item.SizeText);
     }
 
-    [TestMethod]
+    [Fact]
     public void ResolutionTextReturnsEmptyWhenMissingDimensions()
     {
         var item = new PhotoItem("C:\\temp\\file.jpg", 100, DateTimeOffset.UtcNow, isFolder: false);
 
-        Assert.AreEqual(string.Empty, item.ResolutionText);
+        Assert.Equal(string.Empty, item.ResolutionText);
     }
 
-    [TestMethod]
+    [Fact]
     public void ResolutionTextFormatsDimensions()
     {
         using var _ = new CultureScope(CultureInfo.InvariantCulture);
         var item = new PhotoItem("C:\\temp\\file.jpg", 100, DateTimeOffset.UtcNow, isFolder: false, pixelWidth: 1920, pixelHeight: 1080);
 
-        Assert.AreEqual("1920 x 1080", item.ResolutionText);
+        Assert.Equal("1920 x 1080", item.ResolutionText);
     }
 }

@@ -4,10 +4,9 @@ using PhotoGeoExplorer.ViewModels;
 
 namespace PhotoGeoExplorer.Tests;
 
-[TestClass]
 public sealed class SettingsServiceIntegrationTests
 {
-    [TestMethod]
+    [Fact]
     public async Task SaveLoadRoundTripsSettings()
     {
         var root = CreateTempDirectory();
@@ -27,11 +26,11 @@ public sealed class SettingsServiceIntegrationTests
             await service.SaveAsync(settings).ConfigureAwait(true);
             var loaded = await service.LoadAsync().ConfigureAwait(true);
 
-            Assert.AreEqual(settings.LastFolderPath, loaded.LastFolderPath);
-            Assert.AreEqual(settings.ShowImagesOnly, loaded.ShowImagesOnly);
-            Assert.AreEqual(settings.FileViewMode, loaded.FileViewMode);
-            Assert.AreEqual(settings.Language, loaded.Language);
-            Assert.AreEqual(settings.Theme, loaded.Theme);
+            Assert.Equal(settings.LastFolderPath, loaded.LastFolderPath);
+            Assert.Equal(settings.ShowImagesOnly, loaded.ShowImagesOnly);
+            Assert.Equal(settings.FileViewMode, loaded.FileViewMode);
+            Assert.Equal(settings.Language, loaded.Language);
+            Assert.Equal(settings.Theme, loaded.Theme);
         }
         finally
         {
@@ -39,7 +38,7 @@ public sealed class SettingsServiceIntegrationTests
         }
     }
 
-    [TestMethod]
+    [Fact]
     public async Task LoadLanguageOverrideNormalizesTags()
     {
         var root = CreateTempDirectory();
@@ -56,7 +55,7 @@ public sealed class SettingsServiceIntegrationTests
 
             var language = service.LoadLanguageOverride();
 
-            Assert.AreEqual("ja-JP", language);
+            Assert.Equal("ja-JP", language);
         }
         finally
         {
@@ -64,7 +63,7 @@ public sealed class SettingsServiceIntegrationTests
         }
     }
 
-    [TestMethod]
+    [Fact]
     public async Task LoadLanguageOverrideReturnsNullForSystem()
     {
         var root = CreateTempDirectory();
@@ -81,7 +80,7 @@ public sealed class SettingsServiceIntegrationTests
 
             var language = service.LoadLanguageOverride();
 
-            Assert.IsNull(language);
+            Assert.Null(language);
         }
         finally
         {

@@ -4,11 +4,9 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace PhotoGeoExplorer.Tests;
 
-[TestClass]
 public sealed class FileSystemIntegrationTests
 {
-    [TestMethod]
-    [Ignore("Ignored in CI due to unstable ImageSharp thumbnail generation.")]
+    [Fact]
     public async Task GetPhotoItemsAsyncCreatesThumbnailForImage()
     {
         var root = CreateTempDirectory();
@@ -25,14 +23,13 @@ public sealed class FileSystemIntegrationTests
             var service = new FileSystemService();
             var items = await service.GetPhotoItemsAsync(root, imagesOnly: true, searchText: null).ConfigureAwait(true);
 
-            Assert.AreEqual(1, items.Count);
-            var item = items[0];
-            Assert.IsFalse(item.IsFolder);
-            Assert.IsNotNull(item.ThumbnailPath);
+            var item = Assert.Single(items);
+            Assert.False(item.IsFolder);
+            Assert.NotNull(item.ThumbnailPath);
             thumbnailPath = item.ThumbnailPath;
-            Assert.IsTrue(File.Exists(thumbnailPath));
-            Assert.AreEqual(1, item.PixelWidth);
-            Assert.AreEqual(1, item.PixelHeight);
+            Assert.True(File.Exists(thumbnailPath));
+            Assert.Equal(1, item.PixelWidth);
+            Assert.Equal(1, item.PixelHeight);
         }
         finally
         {

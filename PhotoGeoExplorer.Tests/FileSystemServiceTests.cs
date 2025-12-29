@@ -2,16 +2,9 @@ using PhotoGeoExplorer.Services;
 
 namespace PhotoGeoExplorer.Tests;
 
-[TestClass]
 public sealed class FileSystemServiceTests
 {
-    [TestInitialize]
-    public void Initialize()
-    {
-        TestEnvironment.SkipIfCi("CI環境ではファイルシステム列挙が不安定なためスキップします。");
-    }
-
-    [TestMethod]
+    [Fact]
     public async Task GetPhotoItemsAsyncReturnsDirectoriesBeforeFiles()
     {
         var root = CreateTempDirectory();
@@ -25,15 +18,15 @@ public sealed class FileSystemServiceTests
             var service = new FileSystemService();
             var items = await service.GetPhotoItemsAsync(root, imagesOnly: false, searchText: null).ConfigureAwait(true);
 
-            Assert.AreEqual(4, items.Count);
-            Assert.IsTrue(items[0].IsFolder);
-            Assert.AreEqual("AFolder", items[0].FileName);
-            Assert.IsTrue(items[1].IsFolder);
-            Assert.AreEqual("BFolder", items[1].FileName);
-            Assert.IsFalse(items[2].IsFolder);
-            Assert.AreEqual("a.txt", items[2].FileName);
-            Assert.IsFalse(items[3].IsFolder);
-            Assert.AreEqual("b.txt", items[3].FileName);
+            Assert.Equal(4, items.Count);
+            Assert.True(items[0].IsFolder);
+            Assert.Equal("AFolder", items[0].FileName);
+            Assert.True(items[1].IsFolder);
+            Assert.Equal("BFolder", items[1].FileName);
+            Assert.False(items[2].IsFolder);
+            Assert.Equal("a.txt", items[2].FileName);
+            Assert.False(items[3].IsFolder);
+            Assert.Equal("b.txt", items[3].FileName);
         }
         finally
         {
@@ -41,7 +34,7 @@ public sealed class FileSystemServiceTests
         }
     }
 
-    [TestMethod]
+    [Fact]
     public async Task GetPhotoItemsAsyncImagesOnlyFiltersNonImages()
     {
         var root = CreateTempDirectory();
@@ -53,8 +46,8 @@ public sealed class FileSystemServiceTests
             var service = new FileSystemService();
             var items = await service.GetPhotoItemsAsync(root, imagesOnly: true, searchText: null).ConfigureAwait(true);
 
-            Assert.AreEqual(1, items.Count);
-            Assert.IsTrue(items[0].IsFolder);
+            var item = Assert.Single(items);
+            Assert.True(item.IsFolder);
         }
         finally
         {
@@ -62,7 +55,7 @@ public sealed class FileSystemServiceTests
         }
     }
 
-    [TestMethod]
+    [Fact]
     public void GetChildDirectoriesReturnsSortedNames()
     {
         var root = CreateTempDirectory();
@@ -73,9 +66,9 @@ public sealed class FileSystemServiceTests
 
             var children = FileSystemService.GetChildDirectories(root);
 
-            Assert.AreEqual(2, children.Count);
-            Assert.AreEqual("Alpha", children[0].Name);
-            Assert.AreEqual("Zoo", children[1].Name);
+            Assert.Equal(2, children.Count);
+            Assert.Equal("Alpha", children[0].Name);
+            Assert.Equal("Zoo", children[1].Name);
         }
         finally
         {

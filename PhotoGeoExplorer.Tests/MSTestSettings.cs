@@ -1,1 +1,3 @@
-[assembly: Parallelize(Workers = 1, Scope = ExecutionScope.MethodLevel)]
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]

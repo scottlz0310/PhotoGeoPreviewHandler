@@ -3,16 +3,9 @@ using PhotoGeoExplorer.ViewModels;
 
 namespace PhotoGeoExplorer.Tests;
 
-[TestClass]
 public sealed class MainViewModelIntegrationTests
 {
-    [TestInitialize]
-    public void Initialize()
-    {
-        TestEnvironment.SkipIfCi("CI環境ではWinUI依存の初期化が不安定なためスキップします。");
-    }
-
-    [TestMethod]
+    [Fact]
     public async Task LoadFolderAsyncLoadsItemsAndBreadcrumbs()
     {
         var root = CreateTempDirectory();
@@ -28,14 +21,14 @@ public sealed class MainViewModelIntegrationTests
 
             await viewModel.LoadFolderAsync(root).ConfigureAwait(true);
 
-            Assert.AreEqual(root, viewModel.CurrentFolderPath);
-            Assert.AreEqual(2, viewModel.Items.Count);
-            Assert.IsTrue(viewModel.Items[0].IsFolder);
-            Assert.AreEqual("Folder", viewModel.Items[0].FileName);
-            Assert.IsFalse(viewModel.Items[1].IsFolder);
-            Assert.AreEqual("note.txt", viewModel.Items[1].FileName);
-            Assert.IsTrue(viewModel.BreadcrumbItems.Count > 0);
-            Assert.AreEqual(root, viewModel.BreadcrumbItems.Last().FullPath);
+            Assert.Equal(root, viewModel.CurrentFolderPath);
+            Assert.Equal(2, viewModel.Items.Count);
+            Assert.True(viewModel.Items[0].IsFolder);
+            Assert.Equal("Folder", viewModel.Items[0].FileName);
+            Assert.False(viewModel.Items[1].IsFolder);
+            Assert.Equal("note.txt", viewModel.Items[1].FileName);
+            Assert.True(viewModel.BreadcrumbItems.Count > 0);
+            Assert.Equal(root, viewModel.BreadcrumbItems.Last().FullPath);
         }
         finally
         {
@@ -43,7 +36,7 @@ public sealed class MainViewModelIntegrationTests
         }
     }
 
-    [TestMethod]
+    [Fact]
     public async Task ToggleSortBySizeReordersFiles()
     {
         var root = CreateTempDirectory();
@@ -61,9 +54,9 @@ public sealed class MainViewModelIntegrationTests
             await viewModel.LoadFolderAsync(root).ConfigureAwait(true);
             viewModel.ToggleSort(FileSortColumn.Size);
 
-            Assert.AreEqual("Folder", viewModel.Items[0].FileName);
-            Assert.AreEqual("small.txt", viewModel.Items[1].FileName);
-            Assert.AreEqual("large.txt", viewModel.Items[2].FileName);
+            Assert.Equal("Folder", viewModel.Items[0].FileName);
+            Assert.Equal("small.txt", viewModel.Items[1].FileName);
+            Assert.Equal("large.txt", viewModel.Items[2].FileName);
         }
         finally
         {

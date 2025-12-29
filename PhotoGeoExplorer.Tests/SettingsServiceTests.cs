@@ -4,10 +4,9 @@ using PhotoGeoExplorer.ViewModels;
 
 namespace PhotoGeoExplorer.Tests;
 
-[TestClass]
 public sealed class SettingsServiceTests
 {
-    [TestMethod]
+    [Fact]
     public async Task ExportImportRoundTripsSettings()
     {
         var root = CreateTempDirectory();
@@ -26,12 +25,12 @@ public sealed class SettingsServiceTests
             await SettingsService.ExportAsync(settings, path).ConfigureAwait(true);
             var imported = await SettingsService.ImportAsync(path).ConfigureAwait(true);
 
-            Assert.IsNotNull(imported);
-            Assert.AreEqual(settings.LastFolderPath, imported!.LastFolderPath);
-            Assert.AreEqual(settings.ShowImagesOnly, imported.ShowImagesOnly);
-            Assert.AreEqual(settings.FileViewMode, imported.FileViewMode);
-            Assert.AreEqual(settings.Language, imported.Language);
-            Assert.AreEqual(settings.Theme, imported.Theme);
+            Assert.NotNull(imported);
+            Assert.Equal(settings.LastFolderPath, imported!.LastFolderPath);
+            Assert.Equal(settings.ShowImagesOnly, imported.ShowImagesOnly);
+            Assert.Equal(settings.FileViewMode, imported.FileViewMode);
+            Assert.Equal(settings.Language, imported.Language);
+            Assert.Equal(settings.Theme, imported.Theme);
         }
         finally
         {
