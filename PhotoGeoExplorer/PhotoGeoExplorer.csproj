@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType Condition="'$(WindowsPackageType)'==''">None</WindowsPackageType>
     <Platforms>x64;ARM64</Platforms>
     <RootNamespace>PhotoGeoExplorer</RootNamespace>
     <WindowsSdkPackageVersion>10.0.26100.81</WindowsSdkPackageVersion>
