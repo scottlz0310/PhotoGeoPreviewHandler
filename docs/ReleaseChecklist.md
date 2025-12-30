@@ -2,6 +2,7 @@
 
 ## 事前準備（タグ作成前）
 
+- [ ] `PhotoGeoExplorer/PhotoGeoExplorer.csproj` の `Version` / `AssemblyVersion` / `FileVersion` / `InformationalVersion` を更新
 - [ ] `PhotoGeoExplorer.Installer/PhotoGeoExplorer.Installer.wixproj` の `ProductVersion` を更新
 - [ ] `PhotoGeoExplorer/Package.appxmanifest` の `Identity Version` を更新（例: `1.2.3.0`）
 - [ ] `CHANGELOG.md` に該当バージョンのセクションを追加

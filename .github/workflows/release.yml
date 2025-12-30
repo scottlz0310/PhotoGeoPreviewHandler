@@ -47,6 +47,32 @@ jobs:
             exit 1
           }
 
+          [xml]$app = Get-Content -Path "PhotoGeoExplorer/PhotoGeoExplorer.csproj" -Raw
+          $appVersion = ($app.Project.PropertyGroup.Version | Select-Object -First 1).Trim()
+          if ($appVersion -ne $version) {
+            Write-Error "App Version ($appVersion) must match tag ($version)."
+            exit 1
+          }
+
+          $expectedAssembly = "$version.0"
+          $assemblyVersion = ($app.Project.PropertyGroup.AssemblyVersion | Select-Object -First 1).Trim()
+          if ($assemblyVersion -ne $expectedAssembly) {
+            Write-Error "AssemblyVersion ($assemblyVersion) must match $expectedAssembly."
+            exit 1
+          }
+
+          $fileVersion = ($app.Project.PropertyGroup.FileVersion | Select-Object -First 1).Trim()
+          if ($fileVersion -ne $expectedAssembly) {
+            Write-Error "FileVersion ($fileVersion) must match $expectedAssembly."
+            exit 1
+          }
+
+          $infoVersion = ($app.Project.PropertyGroup.InformationalVersion | Select-Object -First 1).Trim()
+          if ($infoVersion -ne $version) {
+            Write-Error "InformationalVersion ($infoVersion) must match tag ($version)."
+            exit 1
+          }
+
           $changelog = Get-Content -Path "CHANGELOG.md"
           if (-not ($changelog | Select-String -SimpleMatch "## [$version]")) {
             Write-Error "CHANGELOG.md must include a section for [$version]."
