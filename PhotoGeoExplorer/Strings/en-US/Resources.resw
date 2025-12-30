@@ -102,6 +102,27 @@
   <data name="MenuSettingsThemeDark.Text" xml:space="preserve">
     <value>Dark</value>
   </data>
+  <data name="MenuSettingsMapZoom.Text" xml:space="preserve">
+    <value>Map zoom level</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel8.Text" xml:space="preserve">
+    <value>Level 8</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel10.Text" xml:space="preserve">
+    <value>Level 10</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel12.Text" xml:space="preserve">
+    <value>Level 12</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel14.Text" xml:space="preserve">
+    <value>Level 14</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel16.Text" xml:space="preserve">
+    <value>Level 16</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel18.Text" xml:space="preserve">
+    <value>Level 18</value>
+  </data>
   <data name="MenuSettingsAutoUpdate.Text" xml:space="preserve">
     <value>Check for updates automatically</value>
   </data>

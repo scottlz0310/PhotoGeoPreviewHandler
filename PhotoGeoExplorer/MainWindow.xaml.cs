@@ -37,6 +37,8 @@ namespace PhotoGeoExplorer;
 public sealed partial class MainWindow : Window, IDisposable
 {
     private const string InternalDragKey = "PhotoGeoExplorer.InternalDrag";
+    private const int DefaultMapZoomLevel = 14;
+    private static readonly int[] MapZoomLevelOptions = { 8, 10, 12, 14, 16, 18 };
     private readonly MainViewModel _viewModel;
     private readonly SettingsService _settingsService;
     private bool _layoutStored;
@@ -65,6 +67,7 @@ public sealed partial class MainWindow : Window, IDisposable
     private bool _autoCheckUpdates = true;
     private CancellationTokenSource? _updateCts;
     private bool _isCheckingUpdates;
+    private int _mapDefaultZoomLevel = DefaultMapZoomLevel;
 
     public MainWindow()
     {
@@ -291,6 +294,8 @@ public sealed partial class MainWindow : Window, IDisposable
 
         await ApplyLanguageSettingAsync(settings.Language, showLanguagePrompt).ConfigureAwait(true);
         ApplyThemePreference(settings.Theme, saveSettings: false);
+        _mapDefaultZoomLevel = NormalizeMapZoomLevel(settings.MapDefaultZoomLevel);
+        UpdateMapZoomMenuChecks(_mapDefaultZoomLevel);
         _autoCheckUpdates = settings.AutoCheckUpdates;
         UpdateAutoUpdateMenuCheck();
 
@@ -351,7 +356,8 @@ public sealed partial class MainWindow : Window, IDisposable
             FileViewMode = _viewModel.FileViewMode,
             Language = _languageOverride,
             Theme = _themePreference,
-            AutoCheckUpdates = _autoCheckUpdates
+            AutoCheckUpdates = _autoCheckUpdates,
+            MapDefaultZoomLevel = _mapDefaultZoomLevel
         };
     }
 
@@ -595,7 +601,7 @@ public sealed partial class MainWindow : Window, IDisposable
         navigator.CenterOn(position, 0, Mapsui.Animations.Easing.CubicOut);
         if (navigator.Resolutions.Count > 0)
         {
-            var targetLevel = Math.Clamp(14, 0, navigator.Resolutions.Count - 1);
+            var targetLevel = Math.Clamp(_mapDefaultZoomLevel, 0, navigator.Resolutions.Count - 1);
             navigator.ZoomToLevel(targetLevel);
         }
     }
@@ -1033,6 +1039,23 @@ public sealed partial class MainWindow : Window, IDisposable
         ApplyThemePreference(preference, saveSettings: true);
     }
 
+    private void OnMapZoomMenuClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioMenuFlyoutItem item || item.Tag is not string tag)
+        {
+            return;
+        }
+
+        if (!int.TryParse(tag, out var level))
+        {
+            return;
+        }
+
+        _mapDefaultZoomLevel = NormalizeMapZoomLevel(level);
+        UpdateMapZoomMenuChecks(_mapDefaultZoomLevel);
+        ScheduleSettingsSave();
+    }
+
     private async void OnExportSettingsClicked(object sender, RoutedEventArgs e)
     {
         var file = await PickSettingsSaveFileAsync().ConfigureAwait(true);
@@ -1303,6 +1326,49 @@ public sealed partial class MainWindow : Window, IDisposable
         if (ThemeDarkMenuItem is not null)
         {
             ThemeDarkMenuItem.IsChecked = preference == ThemePreference.Dark;
+        }
+    }
+
+    private static int NormalizeMapZoomLevel(int level)
+    {
+        if (MapZoomLevelOptions.Contains(level))
+        {
+            return level;
+        }
+
+        return DefaultMapZoomLevel;
+    }
+
+    private void UpdateMapZoomMenuChecks(int level)
+    {
+        if (MapZoomLevel8MenuItem is not null)
+        {
+            MapZoomLevel8MenuItem.IsChecked = level == 8;
+        }
+
+        if (MapZoomLevel10MenuItem is not null)
+        {
+            MapZoomLevel10MenuItem.IsChecked = level == 10;
+        }
+
+        if (MapZoomLevel12MenuItem is not null)
+        {
+            MapZoomLevel12MenuItem.IsChecked = level == 12;
+        }
+
+        if (MapZoomLevel14MenuItem is not null)
+        {
+            MapZoomLevel14MenuItem.IsChecked = level == 14;
+        }
+
+        if (MapZoomLevel16MenuItem is not null)
+        {
+            MapZoomLevel16MenuItem.IsChecked = level == 16;
+        }
+
+        if (MapZoomLevel18MenuItem is not null)
+        {
+            MapZoomLevel18MenuItem.IsChecked = level == 18;
         }
     }
 

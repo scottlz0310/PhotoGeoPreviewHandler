@@ -191,6 +191,50 @@
                         Click="OnThemeMenuClicked"
                         x:Uid="MenuSettingsThemeDark" />
                 </MenuFlyoutSubItem>
+                <MenuFlyoutSubItem Text="Map zoom level" x:Uid="MenuSettingsMapZoom">
+                    <RadioMenuFlyoutItem
+                        x:Name="MapZoomLevel8MenuItem"
+                        Text="Level 8"
+                        Tag="8"
+                        GroupName="MapZoomLevel"
+                        Click="OnMapZoomMenuClicked"
+                        x:Uid="MenuSettingsMapZoomLevel8" />
+                    <RadioMenuFlyoutItem
+                        x:Name="MapZoomLevel10MenuItem"
+                        Text="Level 10"
+                        Tag="10"
+                        GroupName="MapZoomLevel"
+                        Click="OnMapZoomMenuClicked"
+                        x:Uid="MenuSettingsMapZoomLevel10" />
+                    <RadioMenuFlyoutItem
+                        x:Name="MapZoomLevel12MenuItem"
+                        Text="Level 12"
+                        Tag="12"
+                        GroupName="MapZoomLevel"
+                        Click="OnMapZoomMenuClicked"
+                        x:Uid="MenuSettingsMapZoomLevel12" />
+                    <RadioMenuFlyoutItem
+                        x:Name="MapZoomLevel14MenuItem"
+                        Text="Level 14"
+                        Tag="14"
+                        GroupName="MapZoomLevel"
+                        Click="OnMapZoomMenuClicked"
+                        x:Uid="MenuSettingsMapZoomLevel14" />
+                    <RadioMenuFlyoutItem
+                        x:Name="MapZoomLevel16MenuItem"
+                        Text="Level 16"
+                        Tag="16"
+                        GroupName="MapZoomLevel"
+                        Click="OnMapZoomMenuClicked"
+                        x:Uid="MenuSettingsMapZoomLevel16" />
+                    <RadioMenuFlyoutItem
+                        x:Name="MapZoomLevel18MenuItem"
+                        Text="Level 18"
+                        Tag="18"
+                        GroupName="MapZoomLevel"
+                        Click="OnMapZoomMenuClicked"
+                        x:Uid="MenuSettingsMapZoomLevel18" />
+                </MenuFlyoutSubItem>
                 <ToggleMenuFlyoutItem
                     x:Name="AutoUpdateMenuItem"
                     Text="Check for updates automatically"

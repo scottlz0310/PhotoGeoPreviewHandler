@@ -19,7 +19,8 @@ public sealed class SettingsServiceTests
                 ShowImagesOnly = false,
                 FileViewMode = FileViewMode.Icon,
                 Language = "en-US",
-                Theme = ThemePreference.Dark
+                Theme = ThemePreference.Dark,
+                MapDefaultZoomLevel = 16
             };
 
             await SettingsService.ExportAsync(settings, path).ConfigureAwait(true);
@@ -31,6 +32,7 @@ public sealed class SettingsServiceTests
             Assert.Equal(settings.FileViewMode, imported.FileViewMode);
             Assert.Equal(settings.Language, imported.Language);
             Assert.Equal(settings.Theme, imported.Theme);
+            Assert.Equal(settings.MapDefaultZoomLevel, imported.MapDefaultZoomLevel);
         }
         finally
         {

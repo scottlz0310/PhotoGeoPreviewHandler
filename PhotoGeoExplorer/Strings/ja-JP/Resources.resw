@@ -102,6 +102,27 @@
   <data name="MenuSettingsThemeDark.Text" xml:space="preserve">
     <value>ダーク</value>
   </data>
+  <data name="MenuSettingsMapZoom.Text" xml:space="preserve">
+    <value>地図の初期倍率</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel8.Text" xml:space="preserve">
+    <value>レベル 8</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel10.Text" xml:space="preserve">
+    <value>レベル 10</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel12.Text" xml:space="preserve">
+    <value>レベル 12</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel14.Text" xml:space="preserve">
+    <value>レベル 14</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel16.Text" xml:space="preserve">
+    <value>レベル 16</value>
+  </data>
+  <data name="MenuSettingsMapZoomLevel18.Text" xml:space="preserve">
+    <value>レベル 18</value>
+  </data>
   <data name="MenuSettingsAutoUpdate.Text" xml:space="preserve">
     <value>自動更新チェック</value>
   </data>

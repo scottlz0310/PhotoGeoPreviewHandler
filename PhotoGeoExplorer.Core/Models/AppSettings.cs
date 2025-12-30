@@ -10,4 +10,5 @@ internal sealed class AppSettings
     public string? Language { get; set; }
     public ThemePreference Theme { get; set; } = ThemePreference.System;
     public bool AutoCheckUpdates { get; set; } = true;
+    public int MapDefaultZoomLevel { get; set; } = 14;
 }
