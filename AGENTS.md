@@ -34,9 +34,10 @@
 - 解析は厳格です（`Directory.Build.props` で `AnalysisLevel=latest`、警告はエラー扱い）。
 
 ## テスト指針
-- 現在テストプロジェクトはありません。CI は `*Test*.csproj` を自動検出し、無ければスキップします。
-- 追加する場合は `PhotoGeoExplorer.Tests` のように命名し、次を実行します:
+- `PhotoGeoExplorer.Tests`（xUnit）と `PhotoGeoExplorer.E2E` が存在します。
+- すべてのテストは次で実行します:
   `dotnet test PhotoGeoExplorer.sln -c Release -p:Platform=x64`.
+- E2E を実行する場合は `PHOTO_GEO_EXPLORER_RUN_E2E=1` を指定します。
 
 ## コミット・PR ガイドライン
 - コミットメッセージはコンベンショナルコミット（例: `Fix: WebView2 startup and map status`）。
@@ -47,4 +48,4 @@
 
 ## セキュリティと設定の注意
 - ログは `%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log` に書き出し、起動時にリセットします。
-- Release ワークフローは `v0.1.0` のようなタグで `win-x64` 向け未署名 MSIX を作成します。
+- Release ワークフローは `v1.1.0` のようなタグで `win-x64` 向け MSI を作成します。
