@@ -8,9 +8,12 @@
 
 - [x] Microsoft Partner Center アカウント登録完了
 - [x] アプリ名の予約完了（PhotoGeoExplorer）
-- [ ] Partner Center から Identity 情報を取得
-  - [ ] `Package/Identity/Name`（例: `12345PhotoGeoExplorer.PhotoGeoExplorer`）
-  - [ ] `Package/Identity/Publisher`（例: `CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`）
+- [x] Partner Center から Identity 情報を取得
+  - [x] `Package/Identity/Name`: `scottlz0310.PhotoGeoExplorer`
+  - [x] `Package/Identity/Publisher`: `CN=39FB3D39-1F1A-4B82-B081-47469FD12CA6`
+  - [x] `Package/Properties/PublisherDisplayName`: `scottlz0310`
+  - [x] PFN: `scottlz0310.PhotoGeoExplorer_r99jq8jxntmym`
+  - [x] Store ID: `9P0WNR54441B`
 
 ### アプリ情報
 
