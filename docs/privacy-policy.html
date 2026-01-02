@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,39 +15,47 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
+
         .container {
             background-color: white;
             padding: 40px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             color: #1E90FF;
             border-bottom: 3px solid #1E90FF;
             padding-bottom: 10px;
         }
+
         h2 {
             color: #333;
             margin-top: 30px;
         }
+
         .last-updated {
             color: #666;
             font-size: 0.9em;
             font-style: italic;
         }
+
         .highlight {
             background-color: #e8f4fd;
             padding: 15px;
             border-left: 4px solid #1E90FF;
             margin: 20px 0;
         }
+
         a {
             color: #1E90FF;
             text-decoration: none;
         }
+
         a:hover {
             text-decoration: underline;
         }
+
         footer {
             margin-top: 40px;
             padding-top: 20px;
@@ -57,6 +66,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>プライバシーポリシー</h1>
@@ -68,7 +78,8 @@
 
         <h2>1. はじめに</h2>
         <p>
-            PhotoGeoExplorer（以下「本アプリ」）は、写真の位置情報を地図上で表示・探索する Windows デスクトップアプリです。本ポリシーでは、本アプリがどのようにデータを取り扱い、プライバシーを保護するかを説明します。
+            PhotoGeoExplorer（以下「本アプリ」）は、写真の位置情報を地図上で表示・探索する Windows
+            デスクトップアプリです。本ポリシーでは、本アプリがどのようにデータを取り扱い、プライバシーを保護するかを説明します。
         </p>
 
         <h2>2. 収集しない情報</h2>
@@ -90,9 +101,12 @@
         <ul>
             <li><strong>写真ファイル:</strong> 本アプリは、あなたが明示的に選択したフォルダー内の写真のみを読み取ります。写真は端末内に留まり、アップロードされません。</li>
             <li><strong>EXIF メタデータ:</strong> 位置情報表示のために、写真内の EXIF/GPS データを読み取ります。処理は端末内で行われ、外部へ送信されません。</li>
-            <li><strong>設定:</strong> 言語・テーマなどの設定は、端末内の <code>%LocalAppData%\PhotoGeoExplorer\settings.json</code> に保存されます。</li>
-            <li><strong>ログ:</strong> トラブルシュート目的で、端末内の <code>%LocalAppData%\PhotoGeoExplorer\Logs\app.log</code> にアプリログが保存されます。</li>
-            <li><strong>地図タイルキャッシュ:</strong> 地図表示のために取得したタイルは、性能向上と通信量削減のため <code>%LocalAppData%\PhotoGeoExplorer\Cache\Tiles</code> にキャッシュされます。</li>
+            <li><strong>設定:</strong> 言語・テーマなどの設定は、端末内の <code>%LocalAppData%\PhotoGeoExplorer\settings.json</code>
+                に保存されます。</li>
+            <li><strong>ログ:</strong> トラブルシュート目的で、端末内の <code>%LocalAppData%\PhotoGeoExplorer\Logs\app.log</code>
+                にアプリログが保存されます。</li>
+            <li><strong>地図タイルキャッシュ:</strong> 地図表示のために取得したタイルは、性能向上と通信量削減のため
+                <code>%LocalAppData%\PhotoGeoExplorer\Cache\Tiles</code> にキャッシュされます。</li>
         </ul>
 
         <h2>4. インターネット通信</h2>
@@ -100,7 +114,8 @@
             本アプリは、次の目的に限って最小限のインターネット通信を行います。
         </p>
         <ul>
-            <li><strong>地図タイル:</strong> 地図表示のため、OpenStreetMap または Esri WorldImagery のサーバーから地図タイルを取得します。これらのリクエストに個人情報は含めません。</li>
+            <li><strong>地図タイル:</strong> 地図表示のため、OpenStreetMap または Esri WorldImagery
+                のサーバーから地図タイルを取得します。これらのリクエストに個人情報は含めません。</li>
             <li><strong>更新チェック:</strong> 新バージョン確認のため、GitHub Releases を参照します。これらのリクエストに個人情報や写真データは含めません。</li>
         </ul>
         <p>
@@ -112,14 +127,24 @@
             本アプリは次の第三者サービスを利用しますが、個人情報を共有しません。
         </p>
         <ul>
-            <li><strong>OpenStreetMap:</strong> 地図タイルを <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> のタイルサーバーから取得します。詳しくは <a href="https://wiki.openstreetmap.org/wiki/Privacy_Policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> を参照してください。</li>
-            <li><strong>Esri WorldImagery:</strong> 衛星画像タイルを <a href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">Esri</a> のサーバーから取得します。詳しくは <a href="https://www.esri.com/en-us/privacy/overview" target="_blank" rel="noopener noreferrer">Privacy Policy</a> を参照してください。</li>
-            <li><strong>GitHub:</strong> 更新チェックは GitHub API 経由で行われます。詳しくは <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub Privacy Statement</a> を参照してください。</li>
+            <li><strong>OpenStreetMap:</strong> 地図タイルを <a href="https://www.openstreetmap.org/" target="_blank"
+                    rel="noopener noreferrer">OpenStreetMap</a> のタイルサーバーから取得します。詳しくは <a
+                    href="https://wiki.openstreetmap.org/wiki/Privacy_Policy" target="_blank"
+                    rel="noopener noreferrer">Privacy Policy</a> を参照してください。</li>
+            <li><strong>Esri WorldImagery:</strong> 衛星画像タイルを <a href="https://www.esri.com/" target="_blank"
+                    rel="noopener noreferrer">Esri</a> のサーバーから取得します。詳しくは <a
+                    href="https://www.esri.com/en-us/privacy/overview" target="_blank" rel="noopener noreferrer">Privacy
+                    Policy</a> を参照してください。</li>
+            <li><strong>GitHub:</strong> 更新チェックは GitHub API 経由で行われます。詳しくは <a
+                    href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement"
+                    target="_blank" rel="noopener noreferrer">GitHub Privacy Statement</a> を参照してください。</li>
         </ul>
 
         <h2>6. Google Maps 連携</h2>
         <p>
-            本アプリには、写真の位置をブラウザーで Google Maps を開く任意機能があります。「Google Maps で開く」をクリックした場合、緯度・経度がブラウザーの Google Maps に渡されます。この操作はあなたが明示的に行う場合にのみ実行されます。詳しくは <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google のプライバシーポリシー</a> を参照してください。
+            本アプリには、写真の位置をブラウザーで Google Maps を開く任意機能があります。「Google Maps で開く」をクリックした場合、緯度・経度がブラウザーの Google Maps
+            に渡されます。この操作はあなたが明示的に行う場合にのみ実行されます。詳しくは <a href="https://policies.google.com/privacy" target="_blank"
+                rel="noopener noreferrer">Google のプライバシーポリシー</a> を参照してください。
         </p>
 
         <h2>7. データの安全性</h2>
@@ -144,7 +169,9 @@
 
         <h2>10. オープンソース</h2>
         <p>
-            PhotoGeoExplorer は MIT License のオープンソースソフトウェアです。ソースコードは <a href="https://github.com/scottlz0310/PhotoGeoExplorer" target="_blank" rel="noopener noreferrer">github.com/scottlz0310/PhotoGeoExplorer</a> で確認できます。
+            PhotoGeoExplorer は MIT License のオープンソースソフトウェアです。ソースコードは <a
+                href="https://github.com/scottlz0310/PhotoGeoExplorer" target="_blank"
+                rel="noopener noreferrer">github.com/scottlz0310/PhotoGeoExplorer</a> で確認できます。
         </p>
 
         <h2>11. お問い合わせ</h2>
@@ -153,12 +180,17 @@
         </p>
         <ul>
             <li><strong>Email:</strong> <a href="mailto:scott.lz0310@gmail.com">scott.lz0310@gmail.com</a></li>
-            <li><strong>GitHub Issues:</strong> <a href="https://github.com/scottlz0310/PhotoGeoExplorer/issues" target="_blank" rel="noopener noreferrer">github.com/scottlz0310/PhotoGeoExplorer/issues</a></li>
+            <li><strong>GitHub Issues:</strong> <a href="https://github.com/scottlz0310/PhotoGeoExplorer/issues"
+                    target="_blank" rel="noopener noreferrer">github.com/scottlz0310/PhotoGeoExplorer/issues</a></li>
         </ul>
 
         <footer>
-            <p>PhotoGeoExplorer &copy; 2026 | <a href="https://github.com/scottlz0310/PhotoGeoExplorer" rel="noopener noreferrer">GitHub</a> | <a href="https://github.com/scottlz0310/PhotoGeoExplorer/blob/main/LICENSE" rel="noopener noreferrer">MIT License</a></p>
+            <p>PhotoGeoExplorer &copy; 2026 | <a href="https://github.com/scottlz0310/PhotoGeoExplorer"
+                    rel="noopener noreferrer">GitHub</a> | <a
+                    href="https://github.com/scottlz0310/PhotoGeoExplorer/blob/main/LICENSE"
+                    rel="noopener noreferrer">MIT License</a></p>
         </footer>
     </div>
 </body>
+
 </html>
