@@ -19,19 +19,21 @@
 
 - [ ] カテゴリ選択（例: 写真 & ビデオ）
 - [ ] 年齢制限の設定
-- [ ] プライバシーポリシー URL の準備
+- [x] プライバシーポリシー URL の準備
 
 #### プライバシーポリシー（GitHub Pages）
 
-- [ ] `docs/privacy-policy.html` を公開（GitHub Pages）
+- [x] `docs/privacy-policy.html` を作成（完了）
+- [ ] GitHub Pages を有効化
   - [ ] GitHub の Settings → Pages → **Build and deployment**
     - Source: **Deploy from a branch**
     - Branch: `main`
     - Folder: `/docs`
-  - [ ] 公開 URL を Partner Center の「プライバシーポリシー URL」に設定
-    - 例: `https://scottlz0310.github.io/PhotoGeoExplorer/privacy-policy.html`
-  - [ ] ルート URL でも到達できることを確認
-    - `https://scottlz0310.github.io/PhotoGeoExplorer/` → `privacy-policy.html` に転送
+  - 詳細は `docs/GitHubPagesSetup.md` を参照
+- [ ] 公開 URL を Partner Center の「プライバシーポリシー URL」に設定
+  - 例: `https://scottlz0310.github.io/PhotoGeoExplorer/privacy-policy.html`
+- [ ] ルート URL でも到達できることを確認
+  - `https://scottlz0310.github.io/PhotoGeoExplorer/` → `privacy-policy.html` に転送
 
 ## アセット準備
 
@@ -62,8 +64,9 @@
 
 - [x] Description を英語で記載
 - [x] アセット参照を更新
-- [ ] Partner Center の Identity 情報に更新
+- [x] Partner Center の Identity 情報に更新
 - [x] ShowNameOnTiles を設定
+- [x] DPI awareness (perMonitorV2) を設定
 
 ### MSIX ビルド
 
@@ -71,6 +74,35 @@
 - [ ] コード署名証明書の取得（Store 経由 or 独自証明書）
 - [ ] 署名済み MSIX パッケージの作成
 - [ ] Windows App Cert Kit でのテスト
+
+#### Store アップロード用（推奨）
+
+次のコマンドで、Store へアップロード可能な `*.msixupload` を生成します（署名は Store 側で行う想定のため無効化）。
+
+```powershell
+dotnet publish .\PhotoGeoExplorer\PhotoGeoExplorer.csproj -c Release -p:Platform=x64 `
+  -p:WindowsPackageType=MSIX -p:GenerateAppxPackageOnBuild=true -p:AppxBundle=Never `
+  -p:UapAppxPackageBuildMode=StoreUpload -p:AppxPackageSigningEnabled=false -p:AppxSymbolPackageEnabled=false
+```
+
+生成物（例）:
+
+- `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.3.0.0_x64.msixupload`
+
+補足:
+
+- `AppxSymbolPackageEnabled=false` は、開発環境によりシンボル生成に必要なツールが不足している場合でもパッケージ生成を通すための設定です。
+
+#### ローカル動作確認用（任意）
+
+ローカルでインストールして動作確認する場合は、`*_Test` フォルダー配下の `*.msix` を利用します。
+
+- 例: `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.3.0.0_x64_Test\PhotoGeoExplorer_1.3.0.0_x64.msix`
+
+#### Windows App Certification Kit (WACK)
+
+- Windows App Certification Kit を起動し、生成した `*.msixupload`（または `*.msix`）を指定してテストを実行します。
+- 失敗した項目は審査で指摘されやすいので、レポートを保存して原因対応します。
 
 ### CI/CD パイプライン
 
@@ -90,7 +122,8 @@
 
 ### 法的文書
 
-- [ ] プライバシーポリシー作成・公開
+- [x] プライバシーポリシー作成（完了）
+- [ ] プライバシーポリシー公開（GitHub Pages 有効化が必要）
 - [ ] 利用規約（オプション）
 - [ ] サポートページ
 
