@@ -1,12 +1,12 @@
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
-
 param(
     [string]$CertificateSubject = 'CN=PhotoGeoExplorer Test',
     [string]$CertificateName = 'PhotoGeoExplorer_Test',
     [string]$CertificatePassword,
     [switch]$ForceNewCertificate
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $scriptDir
@@ -34,8 +34,12 @@ if ($ForceNewCertificate -or -not (Test-Path $pfxPath)) {
 }
 
 Import-Certificate -FilePath $cerPath -CertStoreLocation 'Cert:\CurrentUser\TrustedPeople' | Out-Null
-
-$plainPassword = ConvertFrom-SecureString $securePassword -AsPlainText
+$imported = Import-PfxCertificate -FilePath $pfxPath -Password $securePassword -CertStoreLocation 'Cert:\CurrentUser\My'
+if (-not $imported) {
+    Write-Host "Failed to import PFX: $pfxPath" -ForegroundColor Red
+    exit 1
+}
+$thumbprint = $imported.Thumbprint
 
 $publishArgs = @(
     'publish',
@@ -46,12 +50,16 @@ $publishArgs = @(
     '-p:GenerateAppxPackageOnBuild=true',
     '-p:AppxBundle=Never',
     '-p:AppxPackageSigningEnabled=true',
-    "-p:PackageCertificateKeyFile=$pfxPath",
-    "-p:PackageCertificatePassword=$plainPassword",
+    "-p:PackageCertificateThumbprint=$thumbprint",
     '-p:AppxSymbolPackageEnabled=false'
 )
 
 & dotnet @publishArgs
+$exitCode = $LASTEXITCODE
+if ($exitCode -ne 0) {
+    Write-Host "dotnet publish failed with exit code $exitCode" -ForegroundColor Red
+    exit $exitCode
+}
 
 $msixPattern = Join-Path $projectRoot 'PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_*_Test\PhotoGeoExplorer_*.msix'
 $msix = Get-ChildItem -Path $msixPattern -ErrorAction SilentlyContinue |
