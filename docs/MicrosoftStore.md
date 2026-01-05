@@ -2,6 +2,12 @@
 
 このドキュメントは、Microsoft Store 公開に向けた準備項目のチェックリストです。
 
+## 公開状況
+
+- 公開済み: https://apps.microsoft.com/detail/9P0WNR54441B
+- 公開バージョン: v1.3.0
+- Store ID: 9P0WNR54441B
+
 ## Partner Center 設定
 
 ### アプリ登録
@@ -17,22 +23,22 @@
 
 ### アプリ情報
 
-- [ ] カテゴリ選択（例: 写真 & ビデオ）
-- [ ] 年齢制限の設定
+- [x] カテゴリ選択（写真 & ビデオ）
+- [x] 年齢制限の設定
 - [x] プライバシーポリシー URL の準備
 
 #### プライバシーポリシー（GitHub Pages）
 
 - [x] `docs/privacy-policy.html` を作成（完了）
-- [ ] GitHub Pages を有効化
+- [x] GitHub Pages を有効化
   - [ ] GitHub の Settings → Pages → **Build and deployment**
     - Source: **Deploy from a branch**
     - Branch: `main`
     - Folder: `/docs`
   - 詳細は `docs/GitHubPagesSetup.md` を参照
-- [ ] 公開 URL を Partner Center の「プライバシーポリシー URL」に設定
+- [x] 公開 URL を Partner Center の「プライバシーポリシー URL」に設定
   - 例: `https://scottlz0310.github.io/PhotoGeoExplorer/privacy-policy.html`
-- [ ] ルート URL でも到達できることを確認
+- [x] ルート URL でも到達できることを確認
   - `https://scottlz0310.github.io/PhotoGeoExplorer/` → `privacy-policy.html` に転送
 
 ## アセット準備
@@ -42,10 +48,10 @@
 - [x] Square44x44Logo.png（44×44 px）
 - [x] Square71x71Logo.png（71×71 px）
 - [x] Square150x150Logo.png（150×150 px）
-- [ ] Square310x310Logo.png（310×310 px）**要作成**
+- [x] Square310x310Logo.png（310×310 px）
 - [x] Wide310x150Logo.png（310×150 px）
 - [x] StoreLogo.png（50×50 px）
-- [x] SplashScreen.png（1240×600 px）
+- [x] SplashScreen.png（620×300 px）
 
 ### Store 掲載用アセット
 
@@ -70,10 +76,10 @@
 
 ### MSIX ビルド
 
-- [ ] ローカルでの MSIX パッケージビルドテスト
-- [ ] コード署名証明書の取得（Store 経由 or 独自証明書）
-- [ ] 署名済み MSIX パッケージの作成
-- [ ] Windows App Cert Kit でのテスト
+- [x] ローカルでの MSIX パッケージビルドテスト
+- [x] コード署名証明書の取得（テスト用の自己署名を利用）
+- [x] 署名済み MSIX パッケージの作成
+- [x] Windows App Cert Kit でのテスト
 
 #### Store アップロード用（推奨）
 
@@ -96,6 +102,7 @@ dotnet publish .\PhotoGeoExplorer\PhotoGeoExplorer.csproj -c Release -p:Platform
 #### ローカル動作確認用（任意）
 
 ローカルでインストールして動作確認する場合は、`*_Test` フォルダー配下の `*.msix` を利用します。
+署名付きテストパッケージの生成/導入は `wack/signed-test-package.md` の手順を参照します。
 
 - 例: `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.3.0.0_x64_Test\PhotoGeoExplorer_1.3.0.0_x64.msix`
 
@@ -103,6 +110,8 @@ dotnet publish .\PhotoGeoExplorer\PhotoGeoExplorer.csproj -c Release -p:Platform
 
 - Windows App Certification Kit を起動し、生成した `*.msixupload`（または `*.msix`）を指定してテストを実行します。
 - 失敗した項目は審査で指摘されやすいので、レポートを保存して原因対応します。
+- `wack/run-wack.ps1` を使うとローカル環境向けのプロファイル設定を含めて実行できます。
+- 結果サマリーは `docs/WACK-TestResults.md` に記録します。
 
 ### CI/CD パイプライン
 
@@ -113,36 +122,37 @@ dotnet publish .\PhotoGeoExplorer\PhotoGeoExplorer.csproj -c Release -p:Platform
 
 ### 申請情報
 
-- [ ] アプリの説明（短い説明、詳細な説明）
-  - [ ] 日本語
-  - [ ] 英語
-- [ ] 検索キーワード（最大7個）
-- [ ] サポート連絡先情報
-- [ ] Webサイト URL
+- [x] アプリの説明（短い説明、詳細な説明）
+  - [x] 日本語
+  - [x] 英語
+- [x] 検索キーワード（最大7個）
+- [x] サポート連絡先情報
+- [x] Webサイト URL
 
 ### 法的文書
 
 - [x] プライバシーポリシー作成（完了）
-- [ ] プライバシーポリシー公開（GitHub Pages 有効化が必要）
+- [x] プライバシーポリシー公開（GitHub Pages 有効化が必要）
 - [ ] 利用規約（オプション）
-- [ ] サポートページ
+- [x] サポートページ
 
 ### テスト
 
-- [ ] クリーンな Windows 環境でのインストールテスト
-- [ ] Windows App Cert Kit でのテスト合格
-- [ ] 審査ノートの準備（テスト手順など）
+- [x] クリーンな Windows 環境でのインストールテスト
+- [x] Windows App Cert Kit でのテスト合格
+- [x] 審査ノートの準備（テスト手順など）
 
 ## リリース後
 
-- [ ] 審査承認の確認
-- [ ] Store での公開確認
-- [ ] README.md に Microsoft Store バッジを追加
-- [ ] ユーザーフィードバックの監視
+- [x] 審査承認の確認
+- [x] Store での公開確認
+- [x] README.md に Microsoft Store バッジを追加
+- [x] ユーザーフィードバックの監視を開始
 - [ ] 定期的なアップデート計画
 
 ## 参考リンク
 
 - [Microsoft Partner Center](https://partner.microsoft.com/dashboard)
+- [Microsoft Store - PhotoGeoExplorer](https://apps.microsoft.com/detail/9P0WNR54441B)
 - [Windows アプリ認定キット](https://developer.microsoft.com/windows/downloads/windows-app-certification-kit/)
 - [MSIX パッケージング](https://docs.microsoft.com/windows/msix/)

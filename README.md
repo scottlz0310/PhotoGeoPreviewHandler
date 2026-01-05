@@ -1,11 +1,14 @@
 # PhotoGeoExplorer
 
+[![Microsoft Store](https://get.microsoft.com/images/en-us%20dark.svg)](https://apps.microsoft.com/detail/9P0WNR54441B)
+
 PhotoGeoExplorer は、写真の位置情報を地図上に表示する Windows デスクトップアプリです。
 Windows 10/11 を対象とし、WinUI 3 と Mapsui で地図を描画します。
 
 ## ステータス
 
-このリポジトリは v1.3.0 がリリースされています。
+- Microsoft Store で公開済み: https://apps.microsoft.com/detail/9P0WNR54441B
+- GitHub リリース: v1.3.0
 
 ## 現在の機能
 
@@ -24,7 +27,7 @@ Windows 10/11 を対象とし、WinUI 3 と Mapsui で地図を描画します�
 
 - 長期的機能追加に向けた設計見直し
 - パフォーマンス/非同期最適化
-- Microsoft Store 配信対応
+- Microsoft Store 版の改善とフィードバック反映
 
 ## 技術スタック
 
@@ -71,9 +74,10 @@ lefthook install
 タグの push (例: `v1.3.0`) を契機に、`win-x64` 向けの MSI インストーラーを作成します。
 リリース作業のチェックリストは `docs/ReleaseChecklist.md` を参照してください。
 
-## Microsoft Store (将来)
+## Microsoft Store
 
-将来的な Microsoft Store 公開の準備項目は `docs/MicrosoftStore.md` にまとめます。
+Microsoft Store 版は公開済みです: https://apps.microsoft.com/detail/9P0WNR54441B
+申請/運用メモは `docs/MicrosoftStore.md`、WACK 結果は `docs/WACK-TestResults.md` にまとめています。
 
 ## MSI インストール
 
@@ -98,6 +102,7 @@ MSIX を使う場合は、証明書の信頼登録が必要です。配布済み
 ```
 
 管理者権限で LocalMachine にインポートする場合は `-Machine` を付けます。
+署名付きテストパッケージの生成/導入手順は `wack/signed-test-package.md` を参照してください。
 
 ## ライセンス
 
