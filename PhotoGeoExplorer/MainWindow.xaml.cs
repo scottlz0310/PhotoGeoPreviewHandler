@@ -66,6 +66,7 @@ public sealed partial class MainWindow : Window, IDisposable
     private List<PhotoListItem>? _dragItems;
     private bool _isApplyingSettings;
     private string? _languageOverride;
+    private string? _startupFilePath;
     private ThemePreference _themePreference = ThemePreference.System;
     private bool _autoCheckUpdates = true;
     private CancellationTokenSource? _updateCts;
@@ -100,6 +101,7 @@ public sealed partial class MainWindow : Window, IDisposable
         await InitializeMapAsync().ConfigureAwait(true);
         await LoadSettingsAsync().ConfigureAwait(true);
         await ApplyStartupFolderOverrideAsync().ConfigureAwait(true);
+        await ApplyStartupFileActivationAsync().ConfigureAwait(true);
         await _viewModel.InitializeAsync().ConfigureAwait(true);
         await UpdateMapFromSelectionAsync().ConfigureAwait(true);
         if (_autoCheckUpdates)
@@ -380,6 +382,53 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         return null;
+    }
+
+    public void SetStartupFilePath(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return;
+        }
+
+        _startupFilePath = filePath;
+    }
+
+    private async Task ApplyStartupFileActivationAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_startupFilePath))
+        {
+            return;
+        }
+
+        var filePath = _startupFilePath;
+        _startupFilePath = null;
+
+        if (!File.Exists(filePath))
+        {
+            AppLog.Error($"Startup file not found: {filePath}");
+            return;
+        }
+
+        var folderPath = Path.GetDirectoryName(filePath);
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
+            AppLog.Error($"Failed to resolve startup file folder: {filePath}");
+            return;
+        }
+
+        await _viewModel.LoadFolderAsync(folderPath).ConfigureAwait(true);
+
+        var item = _viewModel.Items.FirstOrDefault(candidate =>
+            string.Equals(candidate.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+        if (item is null || item.IsFolder)
+        {
+            AppLog.Error($"Startup file not listed in folder view: {filePath}");
+            return;
+        }
+
+        _viewModel.UpdateSelection(new[] { item });
+        _viewModel.SelectedItem = item;
     }
 
     private static bool TryGetOptionValue(string argument, string option, out string? value)
