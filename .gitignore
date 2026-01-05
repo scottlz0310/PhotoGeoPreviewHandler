@@ -108,3 +108,10 @@ project.fragment.lock.json
 project.lock.json
 publish/
 .claude/
+
+# WACK (Windows App Certification Kit) test files
+wack/wack-report.xml
+wack/logs/
+wack/profile/
+wack/temp/
+wack/certs/
