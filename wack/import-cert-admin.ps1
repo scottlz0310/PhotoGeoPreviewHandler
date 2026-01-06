@@ -12,6 +12,7 @@ if (-not $scriptPath) {
     Write-Error "このスクリプトは .ps1 ファイルとして実行してください（対話型では不可）。"
     exit 1
 }
+$scriptDir = Split-Path -Path $scriptPath -Parent
 
 # --- 非管理者なら管理者権限の pwsh/powershell で再起動 ---
 if (-not $IsAdmin) {
@@ -34,15 +35,15 @@ if (-not $IsAdmin) {
         $alist = "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`" $argsJoined"
     }
 
-    Start-Process -FilePath $exe -ArgumentList $alist -Verb RunAs
+    Start-Process -FilePath $exe -ArgumentList $alist -WorkingDirectory $scriptDir -Verb RunAs
     exit
 }
 
 # --- ここから下が管理者権限での本処理 ---
 Write-Host "管理者権限で実行中: $([Environment]::UserName)"
 
-# 証明書ファイル（相対パスを安全に絶対パスへ解決）
-$relativeCer = ".\wack\certs\PhotoGeoExplorer_test.cer"
+# 証明書ファイル（スクリプト位置基準で安全に絶対パスへ解決）
+$relativeCer = Join-Path -Path $scriptDir -ChildPath "certs\PhotoGeoExplorer_test.cer"
 try {
     if (-not (Test-Path -Path $relativeCer -PathType Leaf)) {
         throw "証明書ファイルが見つかりません: $relativeCer"
