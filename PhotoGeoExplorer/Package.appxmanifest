@@ -38,6 +38,17 @@
         <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="#1E90FF" />
       </uap:VisualElements>
       <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="photo">
+            <uap:DisplayName>PhotoGeoExplorer</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.jpg</uap:FileType>
+              <uap:FileType>.jpeg</uap:FileType>
+              <uap:FileType>.png</uap:FileType>
+              <uap:FileType>.heic</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
         <uap10:Extension Category="windows.protocol">
           <uap10:Protocol Name="photogeoexplorer" />
         </uap10:Extension>
