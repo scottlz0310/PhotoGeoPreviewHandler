@@ -6,6 +6,7 @@
 
 - 公開済み: https://apps.microsoft.com/detail/9P0WNR54441B
 - 公開バージョン: v1.3.0
+- 次回リリース: v1.4.0（準備中）
 - Store ID: 9P0WNR54441B
 
 ## Partner Center 設定
@@ -93,7 +94,7 @@ dotnet publish .\PhotoGeoExplorer\PhotoGeoExplorer.csproj -c Release -p:Platform
 
 生成物（例）:
 
-- `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.3.0.0_x64.msixupload`
+- `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.4.0.0_x64.msixupload`
 
 補足:
 
@@ -104,7 +105,7 @@ dotnet publish .\PhotoGeoExplorer\PhotoGeoExplorer.csproj -c Release -p:Platform
 ローカルでインストールして動作確認する場合は、`*_Test` フォルダー配下の `*.msix` を利用します。
 署名付きテストパッケージの生成/導入は `wack/signed-test-package.md` の手順を参照します。
 
-- 例: `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.3.0.0_x64_Test\PhotoGeoExplorer_1.3.0.0_x64.msix`
+- 例: `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.4.0.0_x64_Test\PhotoGeoExplorer_1.4.0.0_x64.msix`
 
 #### Windows App Certification Kit (WACK)
 
@@ -125,6 +126,8 @@ dotnet publish .\PhotoGeoExplorer\PhotoGeoExplorer.csproj -c Release -p:Platform
 - [x] アプリの説明（短い説明、詳細な説明）
   - [x] 日本語
   - [x] 英語
+- [ ] 依存関係の説明文を追記
+  - このアプリを実行するには .NET Desktop Runtime が必要です。Microsoft Store からのインストール時に自動的に提供されます。
 - [x] 検索キーワード（最大7個）
 - [x] サポート連絡先情報
 - [x] Webサイト URL

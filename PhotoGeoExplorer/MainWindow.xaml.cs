@@ -194,7 +194,7 @@ public sealed partial class MainWindow : Window, IDisposable
                 "PhotoGeoExplorer",
                 "Cache",
                 "Tiles");
-            const string userAgent = "PhotoGeoExplorer/1.3.0 (scott.lz0310@gmail.com)";
+            const string userAgent = "PhotoGeoExplorer/1.4.0 (scott.lz0310@gmail.com)";
             var tileLayer = CreateTileLayer(_mapTileSource, cacheRoot, userAgent);
             _baseTileLayer = tileLayer;
             map.Layers.Add(tileLayer);
@@ -291,7 +291,7 @@ public sealed partial class MainWindow : Window, IDisposable
                 "PhotoGeoExplorer",
                 "Cache",
                 "Tiles");
-            const string userAgent = "PhotoGeoExplorer/1.3.0 (scott.lz0310@gmail.com)";
+            const string userAgent = "PhotoGeoExplorer/1.4.0 (scott.lz0310@gmail.com)";
             var newTileLayer = CreateTileLayer(newSource, cacheRoot, userAgent);
 
             if (_baseTileLayer is not null)
