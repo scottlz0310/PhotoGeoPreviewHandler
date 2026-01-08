@@ -75,11 +75,13 @@ jobs:
       - name: Test
         shell: pwsh
         run: |
-          dotnet test PhotoGeoExplorer.Tests/PhotoGeoExplorer.Tests.csproj `
+          dotnet test PhotoGeoExplorer.Tests/PhotoGeoExplorer.Tests.csproj `    
             -c ${{ matrix.configuration }} `
             -p:Platform=${{ matrix.platform }} `
             -p:TreatWarningsAsErrors=true `
             -p:AnalysisLevel=latest `
+            -p:DebugType=portable `
+            -p:DebugSymbols=true `
             --logger "trx;LogFileName=test-results.trx" `
             --results-directory TestResults `
             --collect "XPlat Code Coverage" `
