@@ -5,6 +5,9 @@
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <Format>cobertura</Format>
+          <UseSourceLink>true</UseSourceLink>
+          <SkipAutoProps>true</SkipAutoProps>
+          <DeterministicSourcePaths>true</DeterministicSourcePaths>
           <Exclude>[xunit.*]*,[*.Tests]*,[*.E2E]*</Exclude>
           <ExcludeByAttribute>ExcludeFromCodeCoverage,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
           <ExcludeByFile>**/*.g.cs;**/*.g.i.cs;**/*.designer.cs</ExcludeByFile>
