@@ -3,7 +3,7 @@ coverage:
   round: down
   range: "60...100"
 fixes:
-  - 'D:\a\PhotoGeoExplorer\PhotoGeoExplorer\::'
+  - 'D:/a/PhotoGeoExplorer/PhotoGeoExplorer/::'
 
 ignore:
   - "PhotoGeoExplorer.Tests/**"
