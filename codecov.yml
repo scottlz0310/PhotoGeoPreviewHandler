@@ -2,6 +2,8 @@ coverage:
   precision: 2
   round: down
   range: "60...100"
+fixes:
+  - 'D:\a\PhotoGeoExplorer\PhotoGeoExplorer\::'
 
 ignore:
   - "PhotoGeoExplorer.Tests/**"
