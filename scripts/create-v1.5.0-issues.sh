@@ -47,6 +47,30 @@ issue_exists() {
     gh issue list --repo "${REPO}" --search "in:title \"${title}\"" --state all --limit 1 --json title --jq '.[].title' | grep -q "^${title}$"
 }
 
+# ラベルの存在チェックと作成
+label_exists() {
+    local name="$1"
+    gh label list --repo "${REPO}" --json name --jq '.[].name' | grep -q "^${name}$"
+}
+
+ensure_label() {
+    local name="$1"
+    local description="$2"
+    local color="$3"
+
+    if label_exists "${name}"; then
+        return
+    fi
+
+    gh label create "${name}" --repo "${REPO}" --description "${description}" --color "${color}"
+    echo "✓ ラベルを作成しました: ${name}"
+}
+
+# Issue作成前にラベルを整備
+ensure_label "performance" "パフォーマンス改善" "fbca04"
+ensure_label "seo" "SEO改善" "0e8a16"
+ensure_label "feature" "新機能" "5319e7"
+
 # Issue作成前の確認
 echo "既存のIssueをチェック中..."
 echo ""
