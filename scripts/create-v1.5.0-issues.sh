@@ -49,15 +49,6 @@ issue_exists() {
 
 # Issue作成前の確認
 echo "既存のIssueをチェック中..."
-
-# 重複チェック用関数
-issue_exists() {
-    local title="$1"
-    gh issue list --repo "${REPO}" --search "in:title \"${title}\"" --state all --limit 1 --json title --jq '.[].title' | grep -q "^${title}$"
-}
-
-# Issue作成前の確認
-echo "既存のIssueをチェック中..."
 echo ""
 
 # Issue作成開始
