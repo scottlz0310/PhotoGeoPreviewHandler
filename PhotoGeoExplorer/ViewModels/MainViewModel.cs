@@ -442,7 +442,7 @@ internal sealed class MainViewModel : BindableBase
             _isNavigating = true;
             try
             {
-                await LoadFolderAsync(previousPath).ConfigureAwait(true);
+                await LoadFolderCoreAsync(previousPath).ConfigureAwait(true);
                 
                 // ロード成功時のみ進む履歴に追加
                 if (!string.IsNullOrWhiteSpace(currentPath) && 
@@ -491,7 +491,7 @@ internal sealed class MainViewModel : BindableBase
             _isNavigating = true;
             try
             {
-                await LoadFolderAsync(nextPath).ConfigureAwait(true);
+                await LoadFolderCoreAsync(nextPath).ConfigureAwait(true);
                 
                 // ロード成功時のみ戻る履歴に追加
                 if (!string.IsNullOrWhiteSpace(currentPath) && 
@@ -602,9 +602,21 @@ internal sealed class MainViewModel : BindableBase
         await _navigationSemaphore.WaitAsync().ConfigureAwait(true);
         try
         {
-            var previousPath = CurrentFolderPath;
-            var shouldAddToHistory = !_isNavigating && !string.IsNullOrWhiteSpace(previousPath);
+            await LoadFolderCoreAsync(folderPath).ConfigureAwait(true);
+        }
+        finally
+        {
+            _navigationSemaphore.Release();
+        }
+    }
 
+    private async Task LoadFolderCoreAsync(string folderPath)
+    {
+        var previousPath = CurrentFolderPath;
+        var shouldAddToHistory = !_isNavigating && !string.IsNullOrWhiteSpace(previousPath);
+
+        try
+        {
             CurrentFolderPath = folderPath;
             UpdateBreadcrumbs(folderPath);
             SetStatus(null, InfoBarSeverity.Informational);
@@ -640,29 +652,33 @@ internal sealed class MainViewModel : BindableBase
         {
             AppLog.Error($"Failed to access folder: {folderPath}", ex);
             SetStatus(LocalizationService.GetString("Message.AccessDeniedSeeLog"), InfoBarSeverity.Error);
+            // ロード失敗時は元のパスに戻す
+            CurrentFolderPath = previousPath;
             throw;
         }
         catch (DirectoryNotFoundException ex)
         {
             AppLog.Error($"Folder not found: {folderPath}", ex);
             SetStatus(LocalizationService.GetString("Message.FolderNotFoundSeeLog"), InfoBarSeverity.Error);
+            // ロード失敗時は元のパスに戻す
+            CurrentFolderPath = previousPath;
             throw;
         }
         catch (PathTooLongException ex)
         {
             AppLog.Error($"Folder path too long: {folderPath}", ex);
             SetStatus(LocalizationService.GetString("Message.FolderPathTooLongSeeLog"), InfoBarSeverity.Error);
+            // ロード失敗時は元のパスに戻す
+            CurrentFolderPath = previousPath;
             throw;
         }
         catch (IOException ex)
         {
             AppLog.Error($"Failed to read folder: {folderPath}", ex);
             SetStatus(LocalizationService.GetString("Message.FailedReadFolderSeeLog"), InfoBarSeverity.Error);
+            // ロード失敗時は元のパスに戻す
+            CurrentFolderPath = previousPath;
             throw;
-        }
-        finally
-        {
-            _navigationSemaphore.Release();
         }
     }
 
