@@ -514,12 +514,16 @@ public sealed partial class MainWindow : Window, IDisposable
                 if (!string.Equals(validPath, settings.LastFolderPath, StringComparison.OrdinalIgnoreCase))
                 {
                     AppLog.Info($"LastFolderPath recovered from '{settings.LastFolderPath}' to ancestor '{validPath}'");
+                    
+                    // Update settings to persist the recovered path for next startup
+                    settings.LastFolderPath = validPath;
+                    await _settingsService.SaveAsync(settings).ConfigureAwait(true);
                 }
             }
         }
     }
 
-    private static string? FindValidAncestorPath(string path)
+    private static string? FindValidAncestorPath(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -549,7 +553,8 @@ public sealed partial class MainWindow : Window, IDisposable
         catch (Exception ex) when (ex is ArgumentException
             or PathTooLongException
             or System.Security.SecurityException
-            or NotSupportedException)
+            or NotSupportedException
+            or UnauthorizedAccessException)
         {
             AppLog.Error($"Failed to find valid ancestor path for '{path}'", ex);
         }

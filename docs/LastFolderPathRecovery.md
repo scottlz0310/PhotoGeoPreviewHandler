@@ -59,7 +59,7 @@ D:\Photos\2025\12月\旅行\鎌倉
 ### FindValidAncestorPath メソッド
 
 ```csharp
-private static string? FindValidAncestorPath(string path)
+private static string? FindValidAncestorPath(string? path)
 ```
 
 このメソッドは以下の処理を行います：
@@ -71,6 +71,16 @@ private static string? FindValidAncestorPath(string path)
 5. 有効な祖先が見つかればそのパスを返す
 6. ルートまで到達しても見つからなければ `null` を返す
 
+**注意**: パラメータは `string?` で nullable を明示的に受け入れます。
+
+### 設定の永続化
+
+リカバリが成功した場合（有効な祖先フォルダが見つかった場合）、`settings.LastFolderPath` を更新し、`SettingsService` を通じて保存します。これにより：
+
+- 次回起動時に同じリカバリ処理を繰り返さない
+- ログノイズを抑制
+- ユーザーの現在の状態を正確に保存
+
 ### エラーハンドリング
 
 以下の例外をキャッチし、適切にログ出力します：
@@ -78,6 +88,8 @@ private static string? FindValidAncestorPath(string path)
 - `ArgumentException`: 無効なパス形式
 - `PathTooLongException`: パスが長すぎる
 - `System.Security.SecurityException`: アクセス権限がない
+- `NotSupportedException`: サポートされていないパス形式
+- `UnauthorizedAccessException`: アクセス権限がない（ディレクトリアクセス時）
 - `NotSupportedException`: サポートされていないパス形式
 
 ### ログ出力
@@ -87,6 +99,8 @@ private static string? FindValidAncestorPath(string path)
 ```
 2026-01-14 13:00:00.000 +09:00 [INFO] LastFolderPath recovered from 'D:\Photos\2025\12月\旅行\鎌倉' to ancestor 'D:\Photos\2025\12月\旅行'
 ```
+
+設定ファイルも更新され、次回起動時には復元されたパスが直接使用されます。
 
 ## テスト
 
