@@ -510,11 +510,11 @@ public sealed partial class MainWindow : Window, IDisposable
             if (!string.IsNullOrWhiteSpace(validPath))
             {
                 await _viewModel.LoadFolderAsync(validPath).ConfigureAwait(true);
-                
+
                 if (!string.Equals(validPath, settings.LastFolderPath, StringComparison.OrdinalIgnoreCase))
                 {
                     AppLog.Info($"LastFolderPath recovered from '{settings.LastFolderPath}' to ancestor '{validPath}'");
-                    
+
                     // Update settings to persist the recovered path for next startup
                     settings.LastFolderPath = validPath;
                     await _settingsService.SaveAsync(settings).ConfigureAwait(true);
@@ -533,7 +533,7 @@ public sealed partial class MainWindow : Window, IDisposable
         try
         {
             var current = Path.GetFullPath(path);
-            
+
             while (!string.IsNullOrWhiteSpace(current))
             {
                 if (Directory.Exists(current))

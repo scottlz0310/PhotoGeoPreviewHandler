@@ -5,7 +5,7 @@ namespace PhotoGeoExplorer.Tests;
 public sealed class LastFolderPathRecoveryTests
 {
     [Fact]
-    public void FindValidAncestorPath_ReturnsPathWhenValid()
+    public void FindValidAncestorPathReturnsPathWhenValid()
     {
         // Arrange
         var tempRoot = CreateTempDirectory();
@@ -28,7 +28,7 @@ public sealed class LastFolderPathRecoveryTests
     }
 
     [Fact]
-    public void FindValidAncestorPath_ReturnsParentWhenChildNotExists()
+    public void FindValidAncestorPathReturnsParentWhenChildNotExists()
     {
         // Arrange
         var tempRoot = CreateTempDirectory();
@@ -53,7 +53,7 @@ public sealed class LastFolderPathRecoveryTests
     }
 
     [Fact]
-    public void FindValidAncestorPath_ReturnsGrandparentWhenParentAndChildNotExist()
+    public void FindValidAncestorPathReturnsGrandparentWhenParentAndChildNotExist()
     {
         // Arrange
         var tempRoot = CreateTempDirectory();
@@ -79,7 +79,7 @@ public sealed class LastFolderPathRecoveryTests
     }
 
     [Fact]
-    public void FindValidAncestorPath_ReturnsNullWhenNoValidAncestor()
+    public void FindValidAncestorPathReturnsNullWhenNoValidAncestor()
     {
         // Arrange
         // 存在しないドライブやルートパスを使用
@@ -103,7 +103,7 @@ public sealed class LastFolderPathRecoveryTests
     }
 
     [Fact]
-    public void FindValidAncestorPath_ReturnsNullForEmptyPath()
+    public void FindValidAncestorPathReturnsNullForEmptyPath()
     {
         // Act
         var result = InvokeFindValidAncestorPath(string.Empty);
@@ -113,7 +113,7 @@ public sealed class LastFolderPathRecoveryTests
     }
 
     [Fact]
-    public void FindValidAncestorPath_ReturnsNullForNullPath()
+    public void FindValidAncestorPathReturnsNullForNullPath()
     {
         // Act
         var result = InvokeFindValidAncestorPath(null);
@@ -123,7 +123,7 @@ public sealed class LastFolderPathRecoveryTests
     }
 
     [Fact]
-    public void FindValidAncestorPath_HandlesRelativePaths()
+    public void FindValidAncestorPathHandlesRelativePaths()
     {
         // Arrange
         var tempRoot = CreateTempDirectory();
@@ -158,7 +158,7 @@ public sealed class LastFolderPathRecoveryTests
     }
 
     [Fact]
-    public void FindValidAncestorPath_HandlesDeepNesting()
+    public void FindValidAncestorPathHandlesDeepNesting()
     {
         // Arrange
         var tempRoot = CreateTempDirectory();
@@ -169,7 +169,7 @@ public sealed class LastFolderPathRecoveryTests
             var level3 = Path.Combine(level2, "level3");
             var level4 = Path.Combine(level3, "level4");
             var level5 = Path.Combine(level4, "level5");
-            
+
             Directory.CreateDirectory(level1);
             // level2 以降は作成しない
 
