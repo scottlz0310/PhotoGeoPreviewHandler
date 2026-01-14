@@ -85,13 +85,12 @@ jobs:
             "-p:DebugSymbols=true",
             "--logger", "trx;LogFileName=test-results.trx",
             "--results-directory", "TestResults",
-            "--collect", "XPlat Code Coverage",
-            "--settings", "coverlet.runsettings",
             "--blame-hang-timeout", "10m"
           )
           dotnet test @testArgs
 
       - name: Upload coverage to Codecov
+        if: ${{ hashFiles('TestResults/**/coverage.cobertura.xml') != '' }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
