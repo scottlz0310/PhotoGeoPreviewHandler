@@ -90,7 +90,6 @@ private static string? FindValidAncestorPath(string? path)
 - `System.Security.SecurityException`: アクセス権限がない
 - `NotSupportedException`: サポートされていないパス形式
 - `UnauthorizedAccessException`: アクセス権限がない（ディレクトリアクセス時）
-- `NotSupportedException`: サポートされていないパス形式
 
 ### ログ出力
 

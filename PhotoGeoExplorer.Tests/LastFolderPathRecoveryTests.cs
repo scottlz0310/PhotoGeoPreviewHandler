@@ -2,6 +2,7 @@ using System.Reflection;
 
 namespace PhotoGeoExplorer.Tests;
 
+[Collection("NonParallel")]
 public sealed class LastFolderPathRecoveryTests
 {
     [Fact]
