@@ -620,11 +620,10 @@ internal sealed class MainViewModel : BindableBase, IDisposable
             SetMetadataSummary(null, hasSelection: false);
             UpdateSelection(Array.Empty<PhotoListItem>());
 
-            AppLog.Info($"LoadFolderCoreAsync: Calling GetPhotoItemsAsync for '{folderPath}', ShowImagesOnly={ShowImagesOnly}, SearchText='{SearchText ?? "(null)"}'");
             var items = await _fileSystemService
                 .GetPhotoItemsAsync(folderPath, ShowImagesOnly, SearchText)
                 .ConfigureAwait(true);
-            AppLog.Info($"LoadFolderCoreAsync: GetPhotoItemsAsync returned {items.Count} items");
+            AppLog.Info($"LoadFolderCoreAsync: Retrieved {items.Count} items");
             
             Items.Clear();
             var listItems = items.Select(CreateListItem).ToList();
@@ -681,17 +680,9 @@ internal sealed class MainViewModel : BindableBase, IDisposable
             CurrentFolderPath = previousPath;
             throw;
         }
-        catch (ArgumentException ex)
-        {
-            AppLog.Error($"Invalid argument when loading folder: {folderPath}, previousPath: {previousPath ?? "(null)"}, ItemsCount: {Items.Count}, ShowImagesOnly: {ShowImagesOnly}, SearchText: '{SearchText ?? "(null)"}'", ex);
-            SetStatus(LocalizationService.GetString("Message.FailedReadFolderSeeLog"), InfoBarSeverity.Error);
-            // ロード失敗時は元のパスに戻す
-            CurrentFolderPath = previousPath;
-            throw;
-        }
         catch (Exception ex)
         {
-            AppLog.Error($"Unexpected exception when loading folder: {folderPath}, previousPath: {previousPath ?? "(null)"}, ItemsCount: {Items.Count}", ex);
+            AppLog.Error($"Unexpected error loading folder: {folderPath}, previousPath: {previousPath ?? "(null)"}, ItemsCount: {Items.Count}, SelectedCount: {SelectedCount}", ex);
             SetStatus(LocalizationService.GetString("Message.FailedReadFolderSeeLog"), InfoBarSeverity.Error);
             // ロード失敗時は元のパスに戻す
             CurrentFolderPath = previousPath;

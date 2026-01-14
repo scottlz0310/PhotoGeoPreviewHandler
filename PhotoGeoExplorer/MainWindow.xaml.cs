@@ -1435,7 +1435,8 @@ public sealed partial class MainWindow : Window, IDisposable
         {
             AppLog.Info("Manual update check triggered");
             var currentVersion = typeof(App).Assembly.GetName().Version;
-            var updateResult = await UpdateService.CheckForUpdatesAsync(currentVersion, CancellationToken.None).ConfigureAwait(true);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var updateResult = await UpdateService.CheckForUpdatesAsync(currentVersion, cts.Token).ConfigureAwait(true);
             
             if (updateResult.IsUpdateAvailable)
             {
@@ -1450,6 +1451,13 @@ public sealed partial class MainWindow : Window, IDisposable
                     LocalizationService.GetString("Dialog.UpdateCheck.Title"),
                     LocalizationService.GetString("Dialog.UpdateCheck.NoUpdateDetail")).ConfigureAwait(true);
             }
+        }
+        catch (OperationCanceledException)
+        {
+            AppLog.Info("Update check was cancelled (timeout or user action)");
+            await ShowMessageDialogAsync(
+                LocalizationService.GetString("Dialog.UpdateCheck.Title"),
+                LocalizationService.GetString("Dialog.UpdateCheck.ErrorDetail")).ConfigureAwait(true);
         }
         catch (Exception ex)
         {

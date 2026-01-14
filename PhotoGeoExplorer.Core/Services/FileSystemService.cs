@@ -27,7 +27,6 @@ internal sealed class FileSystemService
         ArgumentNullException.ThrowIfNull(folderPath);
 
         var normalizedSearch = string.IsNullOrWhiteSpace(searchText) ? null : searchText.Trim();
-        AppLog.Info($"GetPhotoItemsAsync: folderPath='{folderPath}', imagesOnly={imagesOnly}, searchText='{normalizedSearch ?? "(null)"}'");
         return Task.Run(() => EnumerateFiles(folderPath, imagesOnly, normalizedSearch));
     }
 
@@ -38,7 +37,7 @@ internal sealed class FileSystemService
 
         try
         {
-            AppLog.Info($"EnumerateFiles: Starting enumeration for '{folderPath}'");
+            AppLog.Info($"EnumerateFiles: folderPath='{folderPath}', imagesOnly={imagesOnly}, searchText='{searchText ?? "(null)"}'");
 
             foreach (var path in Directory.EnumerateDirectories(folderPath))
             {
