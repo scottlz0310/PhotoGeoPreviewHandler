@@ -45,6 +45,8 @@ public sealed partial class MainWindow : Window, IDisposable
     private const string PhotoMetadataKey = "PhotoMetadata";
     private const int DefaultMapZoomLevel = 14;
     private static readonly int[] MapZoomLevelOptions = { 8, 10, 12, 14, 16, 18 };
+    private static readonly Color SelectionFillColor = Color.FromArgb(64, 0, 120, 215);
+    private static readonly Color SelectionOutlineColor = Color.FromArgb(255, 0, 120, 215);
     private readonly MainViewModel _viewModel;
     private readonly SettingsService _settingsService;
     private bool _layoutStored;
@@ -3089,8 +3091,8 @@ public sealed partial class MainWindow : Window, IDisposable
 
         var polygonStyle = new VectorStyle
         {
-            Fill = new Brush(Color.FromArgb(64, 0, 120, 215)),
-            Outline = new Pen(Color.FromArgb(255, 0, 120, 215), 2)
+            Fill = new Brush(SelectionFillColor),
+            Outline = new Pen(SelectionOutlineColor, 2)
         };
 
         feature.Styles.Add(polygonStyle);
@@ -3167,13 +3169,10 @@ public sealed partial class MainWindow : Window, IDisposable
         if (selectedItems.Count > 0)
         {
             _viewModel.UpdateSelection(selectedItems);
-            if (selectedItems.Count > 0)
-            {
-                _viewModel.SelectedItem = selectedItems[0];
-            }
+            _viewModel.SelectedItem = selectedItems[0];
 
             var listView = GetFileListView();
-            if (listView is not null && selectedItems.Count > 0)
+            if (listView is not null)
             {
                 listView.ScrollIntoView(selectedItems[0]);
             }
