@@ -1,5 +1,8 @@
 using PhotoGeoExplorer.Services;
 using PhotoGeoExplorer.ViewModels;
+using Microsoft.UI.Xaml;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
 
 namespace PhotoGeoExplorer.Tests;
@@ -132,12 +135,59 @@ public sealed class MainViewModelTests : IDisposable
         Assert.False(viewModel.CanNavigateBack, "同じフォルダの再読み込みでは履歴に追加されない");
     }
 
+    [Fact]
+    public async Task LoadFolderAsyncSkipsThumbnailBitmapImageInTestEnvironment()
+    {
+        // Arrange
+        var fileSystemService = new FileSystemService();
+        using var viewModel = new MainViewModel(fileSystemService);
+        var testFolder = CreateTempDirectory();
+        _ = CreateTestImageFile(testFolder);
+
+        // Act
+        await viewModel.LoadFolderAsync(testFolder).ConfigureAwait(true);
+
+        // Assert
+        var item = viewModel.Items.Single(current => !current.IsFolder);
+        Assert.NotNull(item.Item.ThumbnailPath);
+        Assert.Null(item.Thumbnail);
+    }
+
+    [Fact]
+    public async Task SelectingItemSkipsPreviewBitmapImageInTestEnvironment()
+    {
+        // Arrange
+        var fileSystemService = new FileSystemService();
+        using var viewModel = new MainViewModel(fileSystemService);
+        var testFolder = CreateTempDirectory();
+        _ = CreateTestImageFile(testFolder);
+
+        await viewModel.LoadFolderAsync(testFolder).ConfigureAwait(true);
+        var item = viewModel.Items.Single(current => !current.IsFolder);
+
+        // Act
+        viewModel.SelectedItem = item;
+
+        // Assert
+        Assert.Null(viewModel.SelectedPreview);
+        Assert.Equal(Visibility.Visible, viewModel.PreviewPlaceholderVisibility);
+    }
+
     private string CreateTempDirectory()
     {
         var tempPath = Path.Combine(Path.GetTempPath(), "PhotoGeoExplorer_Test_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempPath);
         _tempDirectories.Add(tempPath);
         return tempPath;
+    }
+
+    private static string CreateTestImageFile(string folderPath)
+    {
+        var filePath = Path.Combine(folderPath, "test.png");
+        using var image = new Image<Rgba32>(1, 1);
+        image[0, 0] = new Rgba32(255, 0, 0, 255);
+        image.Save(filePath);
+        return filePath;
     }
 
     private static string NormalizePath(string path)
