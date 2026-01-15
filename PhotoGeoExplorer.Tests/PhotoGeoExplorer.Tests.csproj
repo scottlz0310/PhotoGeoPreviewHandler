@@ -28,7 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\PhotoGeoExplorer.Core\PhotoGeoExplorer.Core.csproj" />
     <ProjectReference Include="..\PhotoGeoExplorer\PhotoGeoExplorer.csproj">
-      <Properties>WindowsAppSdkBootstrapInitialize=false;WindowsAppSdkAutoInitialize=false</Properties>
+      <Properties>Platform=x64</Properties>
     </ProjectReference>
   </ItemGroup>
 
