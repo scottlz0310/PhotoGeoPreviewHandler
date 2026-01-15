@@ -789,22 +789,24 @@ internal sealed class MainViewModel : BindableBase, IDisposable
             return;
         }
 
+        var filePath = item!.FilePath;
+
         try
         {
-            SelectedPreview = new BitmapImage(new Uri(item!.FilePath));
+            SelectedPreview = new BitmapImage(new Uri(filePath));
             PreviewPlaceholderVisibility = Visibility.Collapsed;
             UpdateStatusBar();
         }
         catch (ArgumentException ex)
         {
-            AppLog.Error($"Failed to load preview image. FilePath: '{item!.FilePath}'", ex);
+            AppLog.Error($"Failed to load preview image. FilePath: '{filePath}'", ex);
             SelectedPreview = null;
             PreviewPlaceholderVisibility = Visibility.Visible;
             UpdateStatusBar();
         }
         catch (UriFormatException ex)
         {
-            AppLog.Error($"Failed to load preview image. FilePath: '{item!.FilePath}'", ex);
+            AppLog.Error($"Failed to load preview image. FilePath: '{filePath}'", ex);
             SelectedPreview = null;
             PreviewPlaceholderVisibility = Visibility.Visible;
             UpdateStatusBar();
