@@ -2411,11 +2411,21 @@ public sealed partial class MainWindow : Window, IDisposable
         };
         deleteItem.Click += OnDeleteClicked;
 
+        var editExifItem = new MenuFlyoutItem
+        {
+            Text = LocalizationService.GetString("Menu.EditExif"),
+            Icon = new SymbolIcon(Symbol.Edit),
+            IsEnabled = _viewModel.CanRenameSelection
+        };
+        editExifItem.Click += OnEditExifClicked;
+
         flyout.Items.Add(createFolder);
         flyout.Items.Add(new MenuFlyoutSeparator());
         flyout.Items.Add(renameItem);
         flyout.Items.Add(moveItem);
         flyout.Items.Add(moveParentItem);
+        flyout.Items.Add(new MenuFlyoutSeparator());
+        flyout.Items.Add(editExifItem);
         flyout.Items.Add(deleteItem);
 
         return flyout;
@@ -2766,6 +2776,192 @@ public sealed partial class MainWindow : Window, IDisposable
         };
 
         await dialog.ShowAsync().AsTask().ConfigureAwait(true);
+    }
+
+    private async void OnEditExifClicked(object sender, RoutedEventArgs e)
+    {
+        // Validate selection
+        if (_viewModel.SelectedItems.Count != 1)
+        {
+            await ShowMessageDialogAsync(
+                LocalizationService.GetString("ExifEditor.Title"),
+                LocalizationService.GetString("Message.ExifEditorMultipleFiles")).ConfigureAwait(true);
+            return;
+        }
+
+        var item = _viewModel.SelectedItems[0];
+        if (item.IsFolder)
+        {
+            await ShowMessageDialogAsync(
+                LocalizationService.GetString("ExifEditor.Title"),
+                LocalizationService.GetString("Message.ExifEditorFolderSelected")).ConfigureAwait(true);
+            return;
+        }
+
+        // Load current metadata
+        var metadata = await PhotoGeoExplorer.Services.ExifService.GetMetadataAsync(item.FilePath, CancellationToken.None).ConfigureAwait(true);
+
+        // Create dialog content
+        var dialogContent = new StackPanel
+        {
+            Spacing = 12,
+            MinWidth = 400
+        };
+
+        // Date Taken
+        var takenAtLabel = new TextBlock
+        {
+            Text = LocalizationService.GetString("ExifEditor.TakenAtLabel"),
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+        };
+        var takenAtPicker = new DatePicker
+        {
+            Date = metadata?.TakenAt?.Date ?? DateTimeOffset.Now.Date
+        };
+        var takenAtTimePicker = new TimePicker
+        {
+            Time = metadata?.TakenAt?.TimeOfDay ?? TimeSpan.Zero
+        };
+
+        dialogContent.Children.Add(takenAtLabel);
+        dialogContent.Children.Add(takenAtPicker);
+        dialogContent.Children.Add(takenAtTimePicker);
+
+        // Latitude
+        var latitudeLabel = new TextBlock
+        {
+            Text = LocalizationService.GetString("ExifEditor.LatitudeLabel"),
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+        };
+        var latitudeBox = new TextBox
+        {
+            PlaceholderText = "0.0",
+            Text = metadata?.Latitude?.ToString(CultureInfo.InvariantCulture) ?? string.Empty
+        };
+
+        dialogContent.Children.Add(latitudeLabel);
+        dialogContent.Children.Add(latitudeBox);
+
+        // Longitude
+        var longitudeLabel = new TextBlock
+        {
+            Text = LocalizationService.GetString("ExifEditor.LongitudeLabel"),
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+        };
+        var longitudeBox = new TextBox
+        {
+            PlaceholderText = "0.0",
+            Text = metadata?.Longitude?.ToString(CultureInfo.InvariantCulture) ?? string.Empty
+        };
+
+        dialogContent.Children.Add(longitudeLabel);
+        dialogContent.Children.Add(longitudeBox);
+
+        // Get location from map button
+        var getLocationButton = new Button
+        {
+            Content = LocalizationService.GetString("ExifEditor.GetLocationFromMap"),
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+        getLocationButton.Click += (s, args) =>
+        {
+            // Get center of visible map
+            if (_map is not null)
+            {
+                var center = _map.Navigator.CenterOfInterest;
+                if (center is not null)
+                {
+                    var lonLat = SphericalMercator.ToLonLat(center);
+                    latitudeBox.Text = lonLat.Y.ToString("F6", CultureInfo.InvariantCulture);
+                    longitudeBox.Text = lonLat.X.ToString("F6", CultureInfo.InvariantCulture);
+                }
+            }
+        };
+        dialogContent.Children.Add(getLocationButton);
+
+        // Clear location button
+        var clearLocationButton = new Button
+        {
+            Content = LocalizationService.GetString("ExifEditor.ClearLocation"),
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+        clearLocationButton.Click += (s, args) =>
+        {
+            latitudeBox.Text = string.Empty;
+            longitudeBox.Text = string.Empty;
+        };
+        dialogContent.Children.Add(clearLocationButton);
+
+        // Update file date checkbox
+        var updateFileDateCheckBox = new CheckBox
+        {
+            Content = LocalizationService.GetString("ExifEditor.UpdateFileDate"),
+            IsChecked = false
+        };
+        dialogContent.Children.Add(updateFileDateCheckBox);
+
+        // Create and show dialog
+        var dialog = new ContentDialog
+        {
+            Title = LocalizationService.GetString("ExifEditor.Title"),
+            Content = dialogContent,
+            PrimaryButtonText = LocalizationService.GetString("ExifEditor.SaveButton"),
+            SecondaryButtonText = LocalizationService.GetString("Common.Cancel"),
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = RootGrid.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync().AsTask().ConfigureAwait(true);
+        if (result != ContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        // Parse input values
+        var newTakenAt = new DateTimeOffset(
+            takenAtPicker.Date.Date.Add(takenAtTimePicker.Time),
+            DateTimeOffset.Now.Offset);
+
+        double? newLatitude = null;
+        if (!string.IsNullOrWhiteSpace(latitudeBox.Text) &&
+            double.TryParse(latitudeBox.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var lat))
+        {
+            newLatitude = lat;
+        }
+
+        double? newLongitude = null;
+        if (!string.IsNullOrWhiteSpace(longitudeBox.Text) &&
+            double.TryParse(longitudeBox.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var lon))
+        {
+            newLongitude = lon;
+        }
+
+        var updateFileDate = updateFileDateCheckBox.IsChecked ?? false;
+
+        // Update EXIF metadata
+        var success = await PhotoGeoExplorer.Services.ExifService.UpdateMetadataAsync(
+            item.FilePath,
+            newTakenAt,
+            newLatitude,
+            newLongitude,
+            updateFileDate,
+            CancellationToken.None).ConfigureAwait(true);
+
+        if (success)
+        {
+            _viewModel.ShowNotification(
+                LocalizationService.GetString("Message.ExifUpdateSuccess"),
+                Microsoft.UI.Xaml.Controls.InfoBarSeverity.Success);
+
+            // Refresh the file list to show updated info
+            await _viewModel.RefreshAsync().ConfigureAwait(true);
+        }
+        else
+        {
+            _viewModel.ShowNotification(
+                LocalizationService.GetString("Message.ExifUpdateFailed"),
+                Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error);
+        }
     }
 
     private static bool ContainsInvalidFileNameChars(string name)
