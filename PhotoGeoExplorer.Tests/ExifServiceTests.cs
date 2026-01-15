@@ -8,7 +8,7 @@ namespace PhotoGeoExplorer.Tests;
 public sealed class ExifServiceTests
 {
     [Fact]
-    public async Task UpdateMetadataAsync_UnsupportedFormat_ReturnsFalse()
+    public async Task UpdateMetadataAsyncUnsupportedFormatReturnsFalse()
     {
         var root = CreateTempDirectory();
         try
@@ -33,7 +33,7 @@ public sealed class ExifServiceTests
     }
 
     [Fact]
-    public async Task UpdateMetadataAsync_ValidJpeg_ReturnsTrue()
+    public async Task UpdateMetadataAsyncValidJpegReturnsTrue()
     {
         var root = CreateTempDirectory();
         try
@@ -76,7 +76,7 @@ public sealed class ExifServiceTests
     }
 
     [Fact]
-    public async Task UpdateMetadataAsync_FileModifiedDateOption_UpdatesFileDate()
+    public async Task UpdateMetadataAsyncFileModifiedDateOptionUpdatesFileDate()
     {
         var root = CreateTempDirectory();
         try
@@ -111,7 +111,7 @@ public sealed class ExifServiceTests
     }
 
     [Fact]
-    public async Task UpdateMetadataAsync_ClearLocation_RemovesGPSTags()
+    public async Task UpdateMetadataAsyncClearLocationRemovesGpsTags()
     {
         var root = CreateTempDirectory();
         try
@@ -162,7 +162,7 @@ public sealed class ExifServiceTests
     }
 
     [Fact]
-    public async Task UpdateMetadataAsync_OnlyUpdateLocation_PreservesDate()
+    public async Task UpdateMetadataAsyncOnlyUpdateLocationPreservesDate()
     {
         var root = CreateTempDirectory();
         try
@@ -211,7 +211,7 @@ public sealed class ExifServiceTests
     }
 
     [Fact]
-    public async Task UpdateMetadataAsync_NonExistentFile_ReturnsFalse()
+    public async Task UpdateMetadataAsyncNonExistentFileReturnsFalse()
     {
         var nonExistentPath = Path.Combine(Path.GetTempPath(), "nonexistent.jpg");
 

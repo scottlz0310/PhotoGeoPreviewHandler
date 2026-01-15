@@ -558,4 +558,13 @@
   <data name="Message.ExifEditorFolderSelected" xml:space="preserve">
     <value>EXIF editing is only supported for image files.</value>
   </data>
+  <data name="Message.ExifPickLocationInstruction" xml:space="preserve">
+    <value>Click the map to choose a location. Right-click to cancel.</value>
+  </data>
+  <data name="Message.ExifPickLocationCanceled" xml:space="preserve">
+    <value>Location selection was canceled.</value>
+  </data>
+  <data name="Message.ExifPickLocationUnavailable" xml:space="preserve">
+    <value>Map is unavailable, so location selection cannot start.</value>
+  </data>
 </root>
