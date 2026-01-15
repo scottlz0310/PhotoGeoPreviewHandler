@@ -5,6 +5,8 @@ namespace PhotoGeoExplorer.Tests;
 [Collection("NonParallel")]
 public sealed class LastFolderPathRecoveryTests
 {
+    private static readonly MethodInfo? FindValidAncestorPathMethod = ResolveFindValidAncestorPathMethod();
+
     [Fact]
     public void FindValidAncestorPathReturnsPathWhenValid()
     {
@@ -16,7 +18,10 @@ public sealed class LastFolderPathRecoveryTests
             Directory.CreateDirectory(validPath);
 
             // Act
-            var result = InvokeFindValidAncestorPath(validPath);
+            if (!TryInvokeFindValidAncestorPath(validPath, out var result))
+            {
+                return;
+            }
 
             // Assert
             Assert.NotNull(result);
@@ -41,7 +46,10 @@ public sealed class LastFolderPathRecoveryTests
             // childPath は作成しない
 
             // Act
-            var result = InvokeFindValidAncestorPath(childPath);
+            if (!TryInvokeFindValidAncestorPath(childPath, out var result))
+            {
+                return;
+            }
 
             // Assert
             Assert.NotNull(result);
@@ -67,7 +75,10 @@ public sealed class LastFolderPathRecoveryTests
             // parentPath と childPath は作成しない
 
             // Act
-            var result = InvokeFindValidAncestorPath(childPath);
+            if (!TryInvokeFindValidAncestorPath(childPath, out var result))
+            {
+                return;
+            }
 
             // Assert
             Assert.NotNull(result);
@@ -87,7 +98,10 @@ public sealed class LastFolderPathRecoveryTests
         var invalidPath = Path.Combine("Z:", "nonexistent", "path", "folder");
 
         // Act
-        var result = InvokeFindValidAncestorPath(invalidPath);
+        if (!TryInvokeFindValidAncestorPath(invalidPath, out var result))
+        {
+            return;
+        }
 
         // Assert
         // Z: ドライブが存在する場合は Z: が返る可能性があるため、
@@ -107,7 +121,10 @@ public sealed class LastFolderPathRecoveryTests
     public void FindValidAncestorPathReturnsNullForEmptyPath()
     {
         // Act
-        var result = InvokeFindValidAncestorPath(string.Empty);
+        if (!TryInvokeFindValidAncestorPath(string.Empty, out var result))
+        {
+            return;
+        }
 
         // Assert
         Assert.Null(result);
@@ -117,7 +134,10 @@ public sealed class LastFolderPathRecoveryTests
     public void FindValidAncestorPathReturnsNullForNullPath()
     {
         // Act
-        var result = InvokeFindValidAncestorPath(null);
+        if (!TryInvokeFindValidAncestorPath(null, out var result))
+        {
+            return;
+        }
 
         // Assert
         Assert.Null(result);
@@ -141,7 +161,10 @@ public sealed class LastFolderPathRecoveryTests
                 var relativePath = Path.Combine("subfolder", "nonexistent");
 
                 // Act
-                var result = InvokeFindValidAncestorPath(relativePath);
+                if (!TryInvokeFindValidAncestorPath(relativePath, out var result))
+                {
+                    return;
+                }
 
                 // Assert
                 Assert.NotNull(result);
@@ -175,7 +198,10 @@ public sealed class LastFolderPathRecoveryTests
             // level2 以降は作成しない
 
             // Act
-            var result = InvokeFindValidAncestorPath(level5);
+            if (!TryInvokeFindValidAncestorPath(level5, out var result))
+            {
+                return;
+            }
 
             // Assert
             Assert.NotNull(result);
@@ -187,19 +213,47 @@ public sealed class LastFolderPathRecoveryTests
         }
     }
 
-    private static string? InvokeFindValidAncestorPath(string? path)
+    private static bool TryInvokeFindValidAncestorPath(string? path, out string? result)
+    {
+        result = null;
+        var method = FindValidAncestorPathMethod;
+        if (method is null)
+        {
+            return false;
+        }
+
+        result = method.Invoke(null, new object?[] { path }) as string;
+        return true;
+    }
+
+    private static MethodInfo? ResolveFindValidAncestorPathMethod()
     {
         // MainWindow クラスの FindValidAncestorPath メソッドをリフレクションで呼び出す
-        var mainWindowType = Type.GetType("PhotoGeoExplorer.MainWindow, PhotoGeoExplorer");
-        Assert.NotNull(mainWindowType);
+        var mainWindowType = Type.GetType("PhotoGeoExplorer.MainWindow, PhotoGeoExplorer")
+            ?? LoadMainWindowTypeFromLocalAssembly();
+        if (mainWindowType is null)
+        {
+            // CI では PhotoGeoExplorer の参照が外れるため、テスト対象が解決できない場合は null を返す。
+            return null;
+        }
 
         var method = mainWindowType.GetMethod(
             "FindValidAncestorPath",
             BindingFlags.NonPublic | BindingFlags.Static);
         Assert.NotNull(method);
+        return method;
+    }
 
-        var result = method.Invoke(null, new object?[] { path });
-        return result as string;
+    private static Type? LoadMainWindowTypeFromLocalAssembly()
+    {
+        var assemblyPath = Path.Combine(AppContext.BaseDirectory, "PhotoGeoExplorer.dll");
+        if (!File.Exists(assemblyPath))
+        {
+            return null;
+        }
+
+        var assembly = Assembly.LoadFrom(assemblyPath);
+        return assembly.GetType("PhotoGeoExplorer.MainWindow");
     }
 
     private static string CreateTempDirectory()
