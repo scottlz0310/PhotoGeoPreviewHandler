@@ -733,7 +733,7 @@ internal sealed class MainViewModel : BindableBase, IDisposable
 
     private static string GenerateToolTipText(PhotoItem item)
     {
-        var lines = new System.Collections.Generic.List<string>();
+        var lines = new List<string>();
 
         // ファイル名
         lines.Add($"{LocalizationService.GetString("ToolTip.FileName")}: {item.FileName}");
