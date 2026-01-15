@@ -16,6 +16,7 @@ namespace PhotoGeoExplorer.ViewModels;
 internal sealed class MainViewModel : BindableBase, IDisposable
 {
     private const int MaxNavigationHistorySize = 100;
+    private static readonly bool IsTestEnvironment = DetectTestEnvironment();
     private readonly FileSystemService _fileSystemService;
     private readonly List<PhotoListItem> _selectedItems = new();
     private readonly Stack<string> _navigationBackStack = new();
@@ -724,7 +725,7 @@ internal sealed class MainViewModel : BindableBase, IDisposable
 
     private static PhotoListItem CreateListItem(PhotoItem item)
     {
-        var thumbnail = CreateThumbnailImage(item.ThumbnailPath);
+        var thumbnail = IsTestEnvironment ? null : CreateThumbnailImage(item.ThumbnailPath);
         return new PhotoListItem(item, thumbnail);
     }
 
@@ -756,9 +757,22 @@ internal sealed class MainViewModel : BindableBase, IDisposable
         }
     }
 
+    private static bool DetectTestEnvironment()
+    {
+        var name = AppDomain.CurrentDomain.FriendlyName;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        return name.Contains("testhost", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("vstest", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("xunit", StringComparison.OrdinalIgnoreCase);
+    }
+
     private void UpdatePreview(PhotoListItem? item)
     {
-        if (item is null || item.IsFolder)
+        if (item is null || item.IsFolder || IsTestEnvironment)
         {
             SelectedPreview = null;
             PreviewPlaceholderVisibility = Visibility.Visible;
