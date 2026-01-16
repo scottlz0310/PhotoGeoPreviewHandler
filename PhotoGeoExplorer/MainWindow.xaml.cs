@@ -93,12 +93,15 @@ public sealed partial class MainWindow : Window, IDisposable
     private Windows.Foundation.Point? _exifPickPointerStart;
     private Window? _helpHtmlWindow;
     private WebView2? _helpHtmlWebView;
+    private readonly bool _settingsFileExistsAtStartup;
+    private bool _showQuickStartOnStartup;
 
     public MainWindow()
     {
         InitializeComponent();
         _viewModel = new MainViewModel(new FileSystemService());
         _settingsService = new SettingsService();
+        _settingsFileExistsAtStartup = _settingsService.SettingsFileExists();
         RootGrid.DataContext = _viewModel;
         Title = LocalizationService.GetString("MainWindow.Title");
         AppLog.Info("MainWindow constructed.");
@@ -124,6 +127,7 @@ public sealed partial class MainWindow : Window, IDisposable
         await ApplyStartupFileActivationAsync().ConfigureAwait(true);
         await _viewModel.InitializeAsync().ConfigureAwait(true);
         await UpdateMapFromSelectionAsync().ConfigureAwait(true);
+        await ShowQuickStartIfNeededAsync().ConfigureAwait(true);
     }
 
     private void EnsureWindowSize()
@@ -514,6 +518,7 @@ public sealed partial class MainWindow : Window, IDisposable
         await ApplyLanguageSettingAsync(settings.Language, showLanguagePrompt).ConfigureAwait(true);
         ApplyThemePreference(settings.Theme, saveSettings: false);
         _mapDefaultZoomLevel = NormalizeMapZoomLevel(settings.MapDefaultZoomLevel);
+        _showQuickStartOnStartup = settings.ShowQuickStartOnStartup;
         UpdateMapZoomMenuChecks(_mapDefaultZoomLevel);
         _mapTileSource = Enum.IsDefined(settings.MapTileSource) ? settings.MapTileSource : MapTileSourceType.OpenStreetMap;
         UpdateMapTileSourceMenuChecks(_mapTileSource);
@@ -627,7 +632,8 @@ public sealed partial class MainWindow : Window, IDisposable
             Language = _languageOverride,
             Theme = _themePreference,
             MapDefaultZoomLevel = _mapDefaultZoomLevel,
-            MapTileSource = _mapTileSource
+            MapTileSource = _mapTileSource,
+            ShowQuickStartOnStartup = _showQuickStartOnStartup
         };
     }
 
@@ -1573,7 +1579,8 @@ public sealed partial class MainWindow : Window, IDisposable
     {
         await ShowHelpDialogAsync(
             "Dialog.Help.GettingStarted.Title",
-            "Dialog.Help.GettingStarted.Detail").ConfigureAwait(true);
+            "Dialog.Help.GettingStarted.Detail",
+            includeQuickStartToggle: true).ConfigureAwait(true);
     }
 
     private async void OnHelpBasicsClicked(object sender, RoutedEventArgs e)
@@ -2808,17 +2815,42 @@ public sealed partial class MainWindow : Window, IDisposable
         await dialog.ShowAsync().AsTask().ConfigureAwait(true);
     }
 
-    private async Task ShowHelpDialogAsync(string titleKey, string detailKey)
+    private async Task ShowHelpDialogAsync(string titleKey, string detailKey, bool includeQuickStartToggle = false)
     {
+        CheckBox? quickStartToggle = null;
+        UIElement content = CreateHelpDialogContent(LocalizationService.GetString(detailKey));
+        if (includeQuickStartToggle)
+        {
+            quickStartToggle = new CheckBox
+            {
+                Content = LocalizationService.GetString("Dialog.Help.QuickStartToggle"),
+                IsChecked = _showQuickStartOnStartup
+            };
+
+            var stack = new StackPanel
+            {
+                Spacing = 12
+            };
+            stack.Children.Add(content);
+            stack.Children.Add(quickStartToggle);
+            content = stack;
+        }
+
         var dialog = new ContentDialog
         {
             Title = LocalizationService.GetString(titleKey),
-            Content = CreateHelpDialogContent(LocalizationService.GetString(detailKey)),
+            Content = content,
             CloseButtonText = LocalizationService.GetString("Common.Ok"),
             XamlRoot = RootGrid.XamlRoot
         };
 
         await dialog.ShowAsync().AsTask().ConfigureAwait(true);
+
+        if (includeQuickStartToggle && quickStartToggle is not null)
+        {
+            _showQuickStartOnStartup = quickStartToggle.IsChecked ?? false;
+            await SaveSettingsAsync().ConfigureAwait(true);
+        }
     }
 
     private static ScrollViewer CreateHelpDialogContent(string message)
@@ -2833,6 +2865,22 @@ public sealed partial class MainWindow : Window, IDisposable
                 TextWrapping = TextWrapping.Wrap
             }
         };
+    }
+
+    private async Task ShowQuickStartIfNeededAsync()
+    {
+        if (_settingsFileExistsAtStartup)
+        {
+            if (!_showQuickStartOnStartup)
+            {
+                return;
+            }
+        }
+
+        await ShowHelpDialogAsync(
+            "Dialog.Help.GettingStarted.Title",
+            "Dialog.Help.GettingStarted.Detail",
+            includeQuickStartToggle: true).ConfigureAwait(true);
     }
 
     private async Task OpenHelpHtmlWindowAsync()
@@ -2885,16 +2933,48 @@ public sealed partial class MainWindow : Window, IDisposable
         return webView;
     }
 
-    private static Uri? TryGetHelpHtmlUri()
+    private Uri? TryGetHelpHtmlUri()
     {
-        var helpPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "help", "index.html");
-        if (!File.Exists(helpPath))
+        var helpDirectory = Path.Combine(AppContext.BaseDirectory, "wwwroot", "help");
+        var preferredFileName = GetHelpHtmlFileName();
+        var preferredPath = Path.Combine(helpDirectory, preferredFileName);
+        if (File.Exists(preferredPath))
         {
-            AppLog.Error($"Help HTML not found: {helpPath}");
-            return null;
+            return new Uri(preferredPath);
         }
 
-        return new Uri(helpPath);
+        var fallbackPath = Path.Combine(helpDirectory, "index.html");
+        if (File.Exists(fallbackPath))
+        {
+            if (!string.Equals(preferredFileName, "index.html", StringComparison.OrdinalIgnoreCase))
+            {
+                AppLog.Info($"Help HTML fallback to {fallbackPath}");
+            }
+
+            return new Uri(fallbackPath);
+        }
+
+        AppLog.Error($"Help HTML not found: {preferredPath}");
+        return null;
+    }
+
+    private string GetHelpHtmlFileName()
+    {
+        var language = _languageOverride;
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            language = ApplicationLanguages.Languages.Count > 0
+                ? ApplicationLanguages.Languages[0]
+                : CultureInfo.CurrentUICulture.Name;
+        }
+
+        if (!string.IsNullOrWhiteSpace(language)
+            && language.StartsWith("en", StringComparison.OrdinalIgnoreCase))
+        {
+            return "index.en.html";
+        }
+
+        return "index.html";
     }
 
     private async Task ShowHelpHtmlMissingDialogAsync()

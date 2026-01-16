@@ -394,6 +394,9 @@
 ・位置情報がある写真のみ地図にピンが表示されます。
 ・必要に応じて、画像の関連付けを Windows で設定するとダブルクリックで起動できます。</value>
   </data>
+  <data name="Dialog.Help.QuickStartToggle" xml:space="preserve">
+    <value>次回起動時にもこのヘルプを表示する</value>
+  </data>
   <data name="Dialog.Help.Basics.Title" xml:space="preserve">
     <value>基本操作</value>
   </data>

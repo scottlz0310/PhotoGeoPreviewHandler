@@ -36,6 +36,11 @@ internal sealed class SettingsService
         _settingsPath = settingsPath;
     }
 
+    public bool SettingsFileExists()
+    {
+        return File.Exists(_settingsPath);
+    }
+
     public async Task<AppSettings> LoadAsync()
     {
         try
