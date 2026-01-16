@@ -63,6 +63,9 @@ internal sealed class PhotoListItem : BindableBase
 
     public int Generation => _generation;
 
+    public int? PixelWidth => _pixelWidth;
+    public int? PixelHeight => _pixelHeight;
+
     public bool HasThumbnail => _thumbnail is not null;
     
     public Visibility ThumbnailVisibility => IsFolder || _thumbnail is null ? Visibility.Collapsed : Visibility.Visible;

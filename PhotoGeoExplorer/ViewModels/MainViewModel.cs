@@ -28,6 +28,8 @@ internal sealed class MainViewModel : BindableBase, IDisposable
     private readonly SemaphoreSlim _thumbnailGenerationSemaphore = new(ThumbnailGenerationConcurrency, ThumbnailGenerationConcurrency);
     private readonly HashSet<string> _thumbnailsInProgress = new();
     private readonly object _thumbnailsInProgressLock = new();
+    private int _thumbnailGenerationTotal;
+    private int _thumbnailGenerationCompleted;
     private CancellationTokenSource? _metadataCts;
     private CancellationTokenSource? _thumbnailGenerationCts;
     private DispatcherQueueTimer? _thumbnailUpdateTimer;
@@ -1115,7 +1117,7 @@ internal sealed class MainViewModel : BindableBase, IDisposable
 
     private static long GetResolutionSortKey(PhotoListItem item, bool ascending)
     {
-        if (item.Item.PixelWidth is not int width || item.Item.PixelHeight is not int height)
+        if (item.PixelWidth is not int width || item.PixelHeight is not int height)
         {
             return ascending ? long.MaxValue : long.MinValue;
         }
@@ -1397,6 +1399,10 @@ internal sealed class MainViewModel : BindableBase, IDisposable
             return;
         }
 
+        // カウンターを初期化
+        _thumbnailGenerationTotal = itemsNeedingThumbnails.Count;
+        _thumbnailGenerationCompleted = 0;
+
         // 更新タイマーの初期化
         _thumbnailUpdateTimer = dispatcherQueue.CreateTimer();
         _thumbnailUpdateTimer.Interval = TimeSpan.FromMilliseconds(ThumbnailUpdateBatchIntervalMs);
@@ -1492,6 +1498,9 @@ internal sealed class MainViewModel : BindableBase, IDisposable
             {
                 _thumbnailsInProgress.Remove(key);
             }
+            
+            // 完了カウントをインクリメント
+            Interlocked.Increment(ref _thumbnailGenerationCompleted);
         }
     }
 
@@ -1529,6 +1538,19 @@ internal sealed class MainViewModel : BindableBase, IDisposable
         if (successCount > 0)
         {
             AppLog.Info($"ApplyPendingThumbnailUpdates: Applied {successCount} thumbnail updates");
+        }
+
+        // すべてのサムネイル生成が完了し、キューも空なら、タイマーを停止
+        if (_thumbnailGenerationCompleted >= _thumbnailGenerationTotal)
+        {
+            lock (_pendingThumbnailUpdatesLock)
+            {
+                if (_pendingThumbnailUpdates.Count == 0 && _thumbnailUpdateTimer is not null)
+                {
+                    _thumbnailUpdateTimer.Stop();
+                    AppLog.Info("ApplyPendingThumbnailUpdates: All thumbnails generated, stopping timer");
+                }
+            }
         }
     }
 
