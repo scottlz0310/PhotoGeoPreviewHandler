@@ -1541,7 +1541,8 @@ internal sealed class MainViewModel : BindableBase, IDisposable
         }
 
         // すべてのサムネイル生成が完了し、キューも空なら、タイマーを停止
-        if (_thumbnailGenerationCompleted >= _thumbnailGenerationTotal)
+        var completed = Volatile.Read(ref _thumbnailGenerationCompleted);
+        if (completed >= _thumbnailGenerationTotal)
         {
             lock (_pendingThumbnailUpdatesLock)
             {

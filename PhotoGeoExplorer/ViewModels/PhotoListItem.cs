@@ -87,6 +87,8 @@ internal sealed class PhotoListItem : BindableBase
         {
             _pixelWidth = width;
             _pixelHeight = height;
+            OnPropertyChanged(nameof(PixelWidth));
+            OnPropertyChanged(nameof(PixelHeight));
             OnPropertyChanged(nameof(ResolutionText));
         }
         
