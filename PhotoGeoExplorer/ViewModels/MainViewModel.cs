@@ -17,13 +17,24 @@ namespace PhotoGeoExplorer.ViewModels;
 internal sealed class MainViewModel : BindableBase, IDisposable
 {
     private const int MaxNavigationHistorySize = 100;
+    private const int ThumbnailGenerationConcurrency = 3;
+    private const int ThumbnailUpdateBatchIntervalMs = 300;
     private static readonly Lazy<bool> _isTestEnvironment = new(DetectTestEnvironment);
     private readonly FileSystemService _fileSystemService;
     private readonly List<PhotoListItem> _selectedItems = new();
     private readonly Stack<string> _navigationBackStack = new();
     private readonly Stack<string> _navigationForwardStack = new();
     private readonly SemaphoreSlim _navigationSemaphore = new(1, 1);
+    private readonly SemaphoreSlim _thumbnailGenerationSemaphore = new(ThumbnailGenerationConcurrency, ThumbnailGenerationConcurrency);
+    private readonly HashSet<string> _thumbnailsInProgress = new();
+    private readonly object _thumbnailsInProgressLock = new();
+    private int _thumbnailGenerationTotal;
+    private int _thumbnailGenerationCompleted;
     private CancellationTokenSource? _metadataCts;
+    private CancellationTokenSource? _thumbnailGenerationCts;
+    private DispatcherQueueTimer? _thumbnailUpdateTimer;
+    private readonly List<(PhotoListItem Item, string? ThumbnailPath, string? Key, int Generation, int? Width, int? Height)> _pendingThumbnailUpdates = new();
+    private readonly object _pendingThumbnailUpdatesLock = new();
     private string? _currentFolderPath;
     private string? _statusMessage;
     private Visibility _statusVisibility = Visibility.Collapsed;
@@ -662,6 +673,9 @@ internal sealed class MainViewModel : BindableBase, IDisposable
                 UpdateNavigationProperties();
             }
 
+            // バックグラウンドでサムネイル生成を開始
+            StartBackgroundThumbnailGeneration();
+
             return true;
         }
         catch (UnauthorizedAccessException ex)
@@ -724,11 +738,42 @@ internal sealed class MainViewModel : BindableBase, IDisposable
         UpdateStatusBar();
     }
 
+    private static readonly HashSet<string> _imageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".bmp",
+        ".tif",
+        ".tiff",
+        ".heic",
+        ".webp"
+    };
+
     private static PhotoListItem CreateListItem(PhotoItem item)
     {
         var thumbnail = CanInitializeBitmapImage() ? CreateThumbnailImage(item.ThumbnailPath) : null;
         var toolTipText = GenerateToolTipText(item);
-        return new PhotoListItem(item, thumbnail, toolTipText);
+
+        // サムネイルキーを生成（画像ファイルのみ）
+        string? thumbnailKey = null;
+        if (!item.IsFolder && IsImageFile(item.FilePath))
+        {
+            var fileInfo = new FileInfo(item.FilePath);
+            if (fileInfo.Exists)
+            {
+                thumbnailKey = ThumbnailService.GetThumbnailCacheKey(item.FilePath, fileInfo.LastWriteTimeUtc);
+            }
+        }
+
+        return new PhotoListItem(item, thumbnail, toolTipText, thumbnailKey);
+    }
+
+    private static bool IsImageFile(string filePath)
+    {
+        var extension = Path.GetExtension(filePath);
+        return _imageExtensions.Contains(extension);
     }
 
     private static string GenerateToolTipText(PhotoItem item)
@@ -1072,7 +1117,7 @@ internal sealed class MainViewModel : BindableBase, IDisposable
 
     private static long GetResolutionSortKey(PhotoListItem item, bool ascending)
     {
-        if (item.Item.PixelWidth is not int width || item.Item.PixelHeight is not int height)
+        if (item.PixelWidth is not int width || item.PixelHeight is not int height)
         {
             return ascending ? long.MaxValue : long.MinValue;
         }
@@ -1327,8 +1372,254 @@ internal sealed class MainViewModel : BindableBase, IDisposable
         _navigationForwardStack.Push(normalizedPath);
     }
 
+    private void StartBackgroundThumbnailGeneration()
+    {
+        // 既存の生成処理をキャンセル
+        CancelThumbnailGeneration();
+
+        // テスト環境またはUIスレッドがない場合はスキップ
+        if (!CanInitializeBitmapImage())
+        {
+            return;
+        }
+
+        var dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+        if (dispatcherQueue is null)
+        {
+            return;
+        }
+
+        // サムネイルが未生成のアイテムを収集
+        var itemsNeedingThumbnails = Items
+            .Where(item => !item.IsFolder && item.Thumbnail is null && item.ThumbnailKey is not null)
+            .ToList();
+
+        if (itemsNeedingThumbnails.Count == 0)
+        {
+            return;
+        }
+
+        // カウンターを初期化
+        _thumbnailGenerationTotal = itemsNeedingThumbnails.Count;
+        _thumbnailGenerationCompleted = 0;
+
+        // 更新タイマーの初期化
+        _thumbnailUpdateTimer = dispatcherQueue.CreateTimer();
+        _thumbnailUpdateTimer.Interval = TimeSpan.FromMilliseconds(ThumbnailUpdateBatchIntervalMs);
+        _thumbnailUpdateTimer.Tick += OnThumbnailUpdateTimerTick;
+        _thumbnailUpdateTimer.Start();
+
+        // 新しいキャンセルトークンを作成
+        var cts = new CancellationTokenSource();
+        _thumbnailGenerationCts = cts;
+
+        AppLog.Info($"StartBackgroundThumbnailGeneration: Starting generation for {itemsNeedingThumbnails.Count} items");
+
+        // バックグラウンドで並列生成開始
+        _ = Task.Run(async () =>
+        {
+            var tasks = itemsNeedingThumbnails.Select(listItem => GenerateThumbnailAsync(listItem, cts.Token));
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+
+            AppLog.Info("StartBackgroundThumbnailGeneration: Completed");
+        }, cts.Token);
+    }
+
+    private async Task GenerateThumbnailAsync(PhotoListItem listItem, CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
+        var key = listItem.ThumbnailKey;
+        if (key is null)
+        {
+            return;
+        }
+
+        // 重複生成を防止
+        lock (_thumbnailsInProgressLock)
+        {
+            if (_thumbnailsInProgress.Contains(key))
+            {
+                return;
+            }
+
+            _thumbnailsInProgress.Add(key);
+        }
+
+        try
+        {
+            // セマフォで並列数を制限
+            await _thumbnailGenerationSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                // サムネイル生成（バックグラウンドスレッド）
+                var fileInfo = new FileInfo(listItem.FilePath);
+                if (!fileInfo.Exists)
+                {
+                    return;
+                }
+
+                var result = ThumbnailService.GenerateThumbnail(listItem.FilePath, fileInfo.LastWriteTimeUtc);
+                if (result.ThumbnailPath is null || cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                // UIスレッドで BitmapImage を作成して更新をキューに追加
+                lock (_pendingThumbnailUpdatesLock)
+                {
+                    _pendingThumbnailUpdates.Add((listItem, result.ThumbnailPath, key, listItem.Generation, result.Width, result.Height));
+                }
+            }
+            finally
+            {
+                _thumbnailGenerationSemaphore.Release();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // キャンセルは正常
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            AppLog.Error($"GenerateThumbnailAsync: Access denied for {listItem.FileName}", ex);
+        }
+        catch (IOException ex)
+        {
+            AppLog.Error($"GenerateThumbnailAsync: IO error for {listItem.FileName}", ex);
+        }
+        catch (NotSupportedException ex)
+        {
+            AppLog.Error($"GenerateThumbnailAsync: Unsupported operation for {listItem.FileName}", ex);
+        }
+        finally
+        {
+            lock (_thumbnailsInProgressLock)
+            {
+                _thumbnailsInProgress.Remove(key);
+            }
+
+            // 完了カウントをインクリメント
+            Interlocked.Increment(ref _thumbnailGenerationCompleted);
+        }
+    }
+
+    private void OnThumbnailUpdateTimerTick(DispatcherQueueTimer sender, object args)
+    {
+        ApplyPendingThumbnailUpdates();
+    }
+
+    private bool IsGenerationComplete()
+    {
+        var completed = Volatile.Read(ref _thumbnailGenerationCompleted);
+        return completed >= _thumbnailGenerationTotal;
+    }
+
+    private void ApplyPendingThumbnailUpdates()
+    {
+        // まず、生成完了チェックを実行（キューの有無に関わらず）
+        var shouldStopTimer = IsGenerationComplete();
+
+        List<(PhotoListItem Item, string? ThumbnailPath, string? Key, int Generation, int? Width, int? Height)> updates;
+
+        lock (_pendingThumbnailUpdatesLock)
+        {
+            // キューが空の場合、完了チェックのみ実行
+            if (_pendingThumbnailUpdates.Count == 0)
+            {
+                if (shouldStopTimer && _thumbnailUpdateTimer is not null)
+                {
+                    _thumbnailUpdateTimer.Stop();
+                    AppLog.Info("ApplyPendingThumbnailUpdates: All thumbnail generation tasks finished, stopping timer (queue empty)");
+                }
+                return;
+            }
+
+            updates = new List<(PhotoListItem, string?, string?, int, int?, int?)>(_pendingThumbnailUpdates);
+            _pendingThumbnailUpdates.Clear();
+        }
+
+        var successCount = 0;
+        foreach (var (item, thumbnailPath, key, generation, width, height) in updates)
+        {
+            // UIスレッドでBitmapImageを作成
+            var thumbnail = CreateThumbnailImage(thumbnailPath);
+            if (thumbnail is not null && item.UpdateThumbnail(thumbnail, key, generation, width, height))
+            {
+                successCount++;
+            }
+        }
+
+        if (successCount > 0)
+        {
+            AppLog.Info($"ApplyPendingThumbnailUpdates: Applied {successCount} thumbnail updates");
+        }
+
+        // 生成完了チェック後、キューも確認してタイマーを停止
+        if (shouldStopTimer)
+        {
+            lock (_pendingThumbnailUpdatesLock)
+            {
+                if (_pendingThumbnailUpdates.Count == 0 && _thumbnailUpdateTimer is not null)
+                {
+                    _thumbnailUpdateTimer.Stop();
+                    AppLog.Info("ApplyPendingThumbnailUpdates: All thumbnail generation tasks finished, stopping timer");
+                }
+            }
+        }
+    }
+
+    private void CancelThumbnailGeneration()
+    {
+        // タイマーを停止
+        if (_thumbnailUpdateTimer is not null)
+        {
+            _thumbnailUpdateTimer.Stop();
+            _thumbnailUpdateTimer.Tick -= OnThumbnailUpdateTimerTick;
+            _thumbnailUpdateTimer = null;
+        }
+
+        // 保留中の更新をクリア
+        lock (_pendingThumbnailUpdatesLock)
+        {
+            _pendingThumbnailUpdates.Clear();
+        }
+
+        // 生成中リストをクリア
+        lock (_thumbnailsInProgressLock)
+        {
+            _thumbnailsInProgress.Clear();
+        }
+
+        // キャンセルトークンをキャンセル
+        var previousCts = _thumbnailGenerationCts;
+        _thumbnailGenerationCts = null;
+        if (previousCts is not null)
+        {
+            try
+            {
+                previousCts.Cancel();
+                previousCts.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+                // 既に破棄済み
+            }
+        }
+    }
+
     public void Dispose()
     {
+        CancelThumbnailGeneration();
+        _thumbnailGenerationSemaphore.Dispose();
         _navigationSemaphore.Dispose();
         _metadataCts?.Cancel();
         _metadataCts?.Dispose();
