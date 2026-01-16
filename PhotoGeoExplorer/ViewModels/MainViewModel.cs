@@ -31,7 +31,7 @@ internal sealed class MainViewModel : BindableBase, IDisposable
     private CancellationTokenSource? _metadataCts;
     private CancellationTokenSource? _thumbnailGenerationCts;
     private DispatcherQueueTimer? _thumbnailUpdateTimer;
-    private readonly List<(PhotoListItem Item, string? ThumbnailPath, string? Key, int Generation)> _pendingThumbnailUpdates = new();
+    private readonly List<(PhotoListItem Item, string? ThumbnailPath, string? Key, int Generation, int? Width, int? Height)> _pendingThumbnailUpdates = new();
     private readonly object _pendingThumbnailUpdatesLock = new();
     private string? _currentFolderPath;
     private string? _statusMessage;
@@ -743,7 +743,7 @@ internal sealed class MainViewModel : BindableBase, IDisposable
         
         // サムネイルキーを生成（画像ファイルのみ）
         string? thumbnailKey = null;
-        if (!item.IsFolder)
+        if (!item.IsFolder && IsImageFile(item.FilePath))
         {
             var fileInfo = new FileInfo(item.FilePath);
             if (fileInfo.Exists)
@@ -753,6 +753,20 @@ internal sealed class MainViewModel : BindableBase, IDisposable
         }
         
         return new PhotoListItem(item, thumbnail, toolTipText, thumbnailKey);
+    }
+
+    private static bool IsImageFile(string filePath)
+    {
+        var extension = Path.GetExtension(filePath);
+        return extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".png", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".gif", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".bmp", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".tif", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".tiff", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".heic", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".webp", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string GenerateToolTipText(PhotoItem item)
@@ -1368,16 +1382,6 @@ internal sealed class MainViewModel : BindableBase, IDisposable
             return;
         }
 
-        // 更新タイマーの初期化
-        _thumbnailUpdateTimer = dispatcherQueue.CreateTimer();
-        _thumbnailUpdateTimer.Interval = TimeSpan.FromMilliseconds(ThumbnailUpdateBatchIntervalMs);
-        _thumbnailUpdateTimer.Tick += OnThumbnailUpdateTimerTick;
-        _thumbnailUpdateTimer.Start();
-
-        // 新しいキャンセルトークンを作成
-        var cts = new CancellationTokenSource();
-        _thumbnailGenerationCts = cts;
-
         // サムネイルが未生成のアイテムを収集
         var itemsNeedingThumbnails = Items
             .Where(item => !item.IsFolder && item.Thumbnail is null && item.ThumbnailKey is not null)
@@ -1388,20 +1392,23 @@ internal sealed class MainViewModel : BindableBase, IDisposable
             return;
         }
 
+        // 更新タイマーの初期化
+        _thumbnailUpdateTimer = dispatcherQueue.CreateTimer();
+        _thumbnailUpdateTimer.Interval = TimeSpan.FromMilliseconds(ThumbnailUpdateBatchIntervalMs);
+        _thumbnailUpdateTimer.Tick += OnThumbnailUpdateTimerTick;
+        _thumbnailUpdateTimer.Start();
+
+        // 新しいキャンセルトークンを作成
+        var cts = new CancellationTokenSource();
+        _thumbnailGenerationCts = cts;
+
         AppLog.Info($"StartBackgroundThumbnailGeneration: Starting generation for {itemsNeedingThumbnails.Count} items");
 
-        // バックグラウンドで生成開始
+        // バックグラウンドで並列生成開始
         _ = Task.Run(async () =>
         {
-            foreach (var listItem in itemsNeedingThumbnails)
-            {
-                if (cts.Token.IsCancellationRequested)
-                {
-                    break;
-                }
-
-                await GenerateThumbnailAsync(listItem, cts.Token).ConfigureAwait(false);
-            }
+            var tasks = itemsNeedingThumbnails.Select(listItem => GenerateThumbnailAsync(listItem, cts.Token));
+            await Task.WhenAll(tasks).ConfigureAwait(false);
 
             AppLog.Info("StartBackgroundThumbnailGeneration: Completed");
         }, cts.Token);
@@ -1458,7 +1465,7 @@ internal sealed class MainViewModel : BindableBase, IDisposable
                 // UIスレッドで BitmapImage を作成して更新をキューに追加
                 lock (_pendingThumbnailUpdatesLock)
                 {
-                    _pendingThumbnailUpdates.Add((listItem, result.ThumbnailPath, key, listItem.Generation));
+                    _pendingThumbnailUpdates.Add((listItem, result.ThumbnailPath, key, listItem.Generation, result.Width, result.Height));
                 }
             }
             finally
@@ -1490,7 +1497,7 @@ internal sealed class MainViewModel : BindableBase, IDisposable
 
     private void ApplyPendingThumbnailUpdates()
     {
-        List<(PhotoListItem Item, string? ThumbnailPath, string? Key, int Generation)> updates;
+        List<(PhotoListItem Item, string? ThumbnailPath, string? Key, int Generation, int? Width, int? Height)> updates;
 
         lock (_pendingThumbnailUpdatesLock)
         {
@@ -1499,16 +1506,16 @@ internal sealed class MainViewModel : BindableBase, IDisposable
                 return;
             }
 
-            updates = new List<(PhotoListItem, string?, string?, int)>(_pendingThumbnailUpdates);
+            updates = new List<(PhotoListItem, string?, string?, int, int?, int?)>(_pendingThumbnailUpdates);
             _pendingThumbnailUpdates.Clear();
         }
 
         var successCount = 0;
-        foreach (var (item, thumbnailPath, key, generation) in updates)
+        foreach (var (item, thumbnailPath, key, generation, width, height) in updates)
         {
             // UIスレッドでBitmapImageを作成
             var thumbnail = CreateThumbnailImage(thumbnailPath);
-            if (thumbnail is not null && item.UpdateThumbnail(thumbnail, key, generation))
+            if (thumbnail is not null && item.UpdateThumbnail(thumbnail, key, generation, width, height))
             {
                 successCount++;
             }

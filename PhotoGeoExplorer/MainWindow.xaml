@@ -114,13 +114,11 @@
                                 Visibility="{Binding PlaceholderVisibility}" />
                         </Grid>
                     </Border>
-                        </Grid>
-                    </Border>
-                    <TextBlock
-                        Grid.Column="1"
-                        Text="{Binding FileName}"
-                        TextTrimming="CharacterEllipsis"
-                        VerticalAlignment="Center" />
+                <TextBlock
+                    Grid.Column="1"
+                    Text="{Binding FileName}"
+                    TextTrimming="CharacterEllipsis"
+                    VerticalAlignment="Center" />
                 <TextBlock
                     Grid.Column="2"
                     Text="{Binding ModifiedAtText}"

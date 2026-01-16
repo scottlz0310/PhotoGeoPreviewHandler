@@ -126,4 +126,27 @@ public sealed class PhotoListItemTests
 
         Assert.Equal(Visibility.Collapsed, listItem.FolderIconVisibility);
     }
+
+    [Fact]
+    public void UpdateThumbnailUpdatesResolution()
+    {
+        var photoItem = new PhotoItem("C:\\test\\file.jpg", 1024, DateTimeOffset.UtcNow, isFolder: false);
+        var listItem = new PhotoListItem(photoItem, thumbnail: null, toolTipText: null, thumbnailKey: "key123");
+
+        Assert.Equal(string.Empty, listItem.ResolutionText);
+
+        var result = listItem.UpdateThumbnail(thumbnail: null, expectedKey: "key123", expectedGeneration: 0, width: 1920, height: 1080);
+
+        Assert.True(result);
+        Assert.Equal("1920 x 1080", listItem.ResolutionText);
+    }
+
+    [Fact]
+    public void ResolutionTextReturnsFormattedValue()
+    {
+        var photoItem = new PhotoItem("C:\\test\\file.jpg", 1024, DateTimeOffset.UtcNow, isFolder: false, pixelWidth: 1920, pixelHeight: 1080);
+        var listItem = new PhotoListItem(photoItem, thumbnail: null);
+
+        Assert.Equal("1920 x 1080", listItem.ResolutionText);
+    }
 }
