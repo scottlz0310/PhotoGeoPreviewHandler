@@ -3052,7 +3052,7 @@ public sealed partial class MainWindow : Window, IDisposable
 
     private void OnHelpWebViewNewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs args)
     {
-        if (TryGetExternalUri(args.Uri, out var uri))
+        if (TryGetExternalUri(args.Uri, out var uri) && uri is not null)
         {
             args.Handled = true;
             _ = OpenExternalUriAsync(uri);
@@ -3061,16 +3061,16 @@ public sealed partial class MainWindow : Window, IDisposable
 
     private void OnHelpWebViewNavigationStarting(WebView2 sender, CoreWebView2NavigationStartingEventArgs args)
     {
-        if (TryGetExternalUri(args.Uri, out var uri))
+        if (TryGetExternalUri(args.Uri, out var uri) && uri is not null)
         {
             args.Cancel = true;
             _ = OpenExternalUriAsync(uri);
         }
     }
 
-    private static bool TryGetExternalUri(string? uriString, out Uri uri)
+    private static bool TryGetExternalUri(string? uriString, out Uri? uri)
     {
-        uri = null!;
+        uri = null;
         if (string.IsNullOrWhiteSpace(uriString))
         {
             return false;
