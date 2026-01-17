@@ -8,7 +8,7 @@ Windows 10/11 を対象とし、WinUI 3 と Mapsui で地図を描画します�
 ## ステータス
 
 - Microsoft Store で公開済み: https://apps.microsoft.com/detail/9P0WNR54441B
-- GitHub リリース: v1.3.0
+- GitHub リリース: v1.5.0
 
 ## 現在の機能
 
