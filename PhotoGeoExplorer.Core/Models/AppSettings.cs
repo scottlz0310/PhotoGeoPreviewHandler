@@ -18,4 +18,5 @@ internal sealed class AppSettings
     public bool AutoCheckUpdates { get; set; } = true;
     public int MapDefaultZoomLevel { get; set; } = 14;
     public MapTileSourceType MapTileSource { get; set; } = MapTileSourceType.OpenStreetMap;
+    public bool ShowQuickStartOnStartup { get; set; }
 }

@@ -394,6 +394,9 @@
 - Pins appear only for photos that include location data.
 - Optional: set Windows file associations to open photos with PhotoGeoExplorer.</value>
   </data>
+  <data name="Dialog.Help.QuickStartToggle" xml:space="preserve">
+    <value>Show this help on startup next time</value>
+  </data>
   <data name="Dialog.Help.Basics.Title" xml:space="preserve">
     <value>Basic operations</value>
   </data>

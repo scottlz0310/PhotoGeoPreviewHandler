@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PhotoGeoExplorer Detailed Help</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #1f2328;
+      --muted: #59636e;
+      --accent: #1f6feb;
+      --border: #d8dee4;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Yu Gothic UI", "Yu Gothic", "Meiryo", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    header {
+      padding: 24px 28px;
+      background: linear-gradient(135deg, #0f2a4a, #1f6feb);
+      color: #ffffff;
+    }
+    header h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+    header p {
+      margin: 0;
+      opacity: 0.85;
+      font-size: 14px;
+    }
+    main {
+      padding: 20px 28px 40px;
+    }
+    nav {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+    }
+    nav a {
+      margin-right: 12px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-block;
+      padding: 4px 0;
+    }
+    section a,
+    .note a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+    section a:hover,
+    .note a:hover {
+      text-decoration: none;
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+    section h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+    section h3 {
+      margin: 12px 0 6px;
+      font-size: 15px;
+    }
+    ul {
+      margin: 8px 0 0 18px;
+      padding: 0;
+    }
+    li {
+      margin: 6px 0;
+    }
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #e7f0ff;
+      color: #0b4db3;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PhotoGeoExplorer Detailed Help</h1>
+    <p>A guide to reviewing and organizing photo locations on a map.</p>
+  </header>
+  <main>
+    <nav>
+      <a href="#overview">Overview</a>
+      <a href="#requirements">Requirements &amp; Formats</a>
+      <a href="#getting-started">Getting Started</a>
+      <a href="#screen">Screen Layout</a>
+      <a href="#navigation">Navigation</a>
+      <a href="#file-ops">File Operations</a>
+      <a href="#search-filter">Search &amp; View</a>
+      <a href="#preview">Preview</a>
+      <a href="#map">Map</a>
+      <a href="#selection">Multi-Select</a>
+      <a href="#exif">EXIF Editing</a>
+      <a href="#settings">Settings</a>
+      <a href="#support">Logs/Updates/Support</a>
+      <a href="#privacy">Privacy</a>
+    </nav>
+
+    <section id="overview">
+      <h2>Overview</h2>
+      <p>PhotoGeoExplorer displays photo location data (EXIF/GPS) on a map to help you review and organize shooting locations.</p>
+      <ul>
+        <li>Review the photo list, preview, and map in a single screen.</li>
+        <li>Check shooting date/time and camera info from map pins.</li>
+        <li>Edit EXIF data when needed (JPEG only).</li>
+      </ul>
+    </section>
+
+    <section id="requirements">
+      <h2>Requirements &amp; Formats</h2>
+      <h3>System requirements</h3>
+      <ul>
+        <li>Windows 10/11</li>
+        <li>WebView2 Runtime (for displaying detailed help)</li>
+      </ul>
+      <h3>Supported image formats</h3>
+      <ul>
+        <li>.jpg / .jpeg / .png / .gif / .bmp / .tif / .tiff / .heic / .webp</li>
+      </ul>
+      <h3>File associations</h3>
+      <ul>
+        <li>File associations are supported for .jpg / .jpeg / .png / .heic.</li>
+        <li>When you open an associated image, the app loads its folder automatically.</li>
+      </ul>
+    </section>
+
+    <section id="getting-started">
+      <h2>Getting Started</h2>
+      <ul>
+        <li>Select a folder from [File] &gt; [Open folder...] to load photos.</li>
+        <li>You can also drag and drop a folder into the app.</li>
+        <li>Select a photo to show the preview and map on the right.</li>
+        <li>Map pins appear only for photos that contain location data.</li>
+        <li>The last opened folder is restored on startup (if missing, the closest parent folder is used).</li>
+      </ul>
+    </section>
+
+    <section id="screen">
+      <h2>Screen Layout</h2>
+      <ul>
+        <li><span class="tag">Left</span> File Browser: navigate folders, search, and view items.</li>
+        <li><span class="tag">Right Top</span> Preview: inspect the selected photo.</li>
+        <li><span class="tag">Right Bottom</span> Map: view and interact with location pins.</li>
+        <li><span class="tag">Bottom</span> Status Bar: item counts, selection, and GPS status.</li>
+      </ul>
+    </section>
+
+    <section id="navigation">
+      <h2>Navigation</h2>
+      <ul>
+        <li>Use Back/Forward to move through recent folder history.</li>
+        <li>Use Up and Home for quick navigation.</li>
+        <li>Click the breadcrumb separator "&gt;" to open child levels.</li>
+      </ul>
+    </section>
+
+    <section id="file-ops">
+      <h2>File Operations</h2>
+      <ul>
+        <li>Create new folders, rename, move, and delete items.</li>
+        <li>Drag and drop files or folders to move them.</li>
+        <li>Double-click a folder to open it.</li>
+      </ul>
+    </section>
+
+    <section id="search-filter">
+      <h2>Search &amp; View</h2>
+      <ul>
+        <li>Filter by file name using the search box.</li>
+        <li>Use Filters or View &gt; Show images only to narrow results.</li>
+        <li>Change view mode (Icon/List/Details) from the View menu.</li>
+        <li>Details view shows extra information on hover.</li>
+      </ul>
+    </section>
+
+    <section id="preview">
+      <h2>Preview</h2>
+      <ul>
+        <li>Use the preview buttons to zoom, fit, or maximize.</li>
+        <li>Use previous/next to move between photos.</li>
+        <li>When maximized, the map area is adjusted automatically.</li>
+      </ul>
+    </section>
+
+    <section id="map">
+      <h2>Map</h2>
+      <ul>
+        <li>Drag to pan and use the mouse wheel to zoom.</li>
+        <li>Click pins to view shooting time, camera, file name, and resolution.</li>
+        <li>Clicking a pin selects the corresponding photo in the list.</li>
+        <li>Open the location in Google Maps from the pin details.</li>
+        <li>Switch map tiles between OpenStreetMap and Esri WorldImagery (satellite imagery).</li>
+        <li>Map tiles are cached locally for faster reloading.</li>
+      </ul>
+    </section>
+
+    <section id="selection">
+      <h2>Multi-Select &amp; Rectangle Selection</h2>
+      <ul>
+        <li>Use Ctrl/Shift for multi-selection.</li>
+        <li>Hold Ctrl and drag on the map to create a selection rectangle.</li>
+        <li>Photos inside the rectangle are selected and reflected in the list.</li>
+      </ul>
+    </section>
+
+    <section id="exif">
+      <h2>EXIF Editing</h2>
+      <ul>
+        <li>Right-click a photo and choose Edit EXIF (JPEG only).</li>
+        <li>Edit shooting date/time, latitude, and longitude.</li>
+        <li>Use "Get location from map" to pick a location by clicking the map.</li>
+        <li>Right-click cancels location selection.</li>
+      </ul>
+    </section>
+
+    <section id="settings">
+      <h2>Settings</h2>
+      <ul>
+        <li>Switch language and theme (restart required after change).</li>
+        <li>Change the default map zoom level and tile source.</li>
+        <li>Export and import settings.</li>
+      </ul>
+    </section>
+
+    <section id="support">
+      <h2>Logs/Updates/Support</h2>
+      <h3>Logs</h3>
+      <ul>
+        <li>Open logs from Help &gt; Open Log Folder.</li>
+        <li>Log location: <code>%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log</code></li>
+      </ul>
+      <h3>Updates</h3>
+      <ul>
+        <li>Check updates via Help &gt; Check for updates (GitHub Releases).</li>
+      </ul>
+      <h3>Support</h3>
+      <ul>
+        <li>Report issues on GitHub Issues.</li>
+        <li>Include repro steps and logs when possible.</li>
+      </ul>
+    </section>
+
+    <section id="privacy">
+      <h2>Privacy</h2>
+      <ul>
+        <li>Photos and settings are processed locally and not uploaded.</li>
+        <li>Map tiles are fetched from OpenStreetMap and Esri servers.</li>
+        <li>See the privacy policy for details.</li>
+      </ul>
+      <p class="note">Privacy policy: <a href="https://scottlz0310.github.io/PhotoGeoExplorer/privacy-policy.html">https://scottlz0310.github.io/PhotoGeoExplorer/privacy-policy.html</a></p>
+    </section>
+  </main>
+</body>
+</html>
