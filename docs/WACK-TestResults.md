@@ -1,14 +1,14 @@
 # Windows アプリ認定キット (WACK) テスト結果
 
-最終更新: 2026-01-06 (v1.4.0 検証)
+最終更新: 2026-01-17 (v1.5.0 検証)
 
 ## テスト結果サマリー
 
 - 結果: 合格 (Required 0)
 - オプション: [88] ブロック済みの実行可能ファイル
 - アプリ名: PhotoGeoExplorer
-- バージョン: 1.4.0.0
-- 実行パッケージ: PhotoGeoExplorer_1.4.0.0_x64.msixbundle
+- バージョン: 1.5.0.0
+- 実行パッケージ: PhotoGeoExplorer_1.5.0.0_x64.msixbundle
 
 ## 実施手順
 
@@ -31,3 +31,6 @@
 
 - runFullTrust は WinUI 3 デスクトップアプリで必須のため、Partner Center の審査ノートに用途を明記します。
 - Optional [88] は依存ライブラリ由来の警告が要因で、オンライン審査は通過済みです。
+- WACK レポートでは `PhotoGeoExplorer.exe` に `shell32.dll!ShellExecuteW` が検出されます（外部ブラウザ/エクスプローラー起動の `Launcher.LaunchUriAsync` / `LaunchFolderPathAsync` 起因）。
+- `Microsoft.WindowsAppRuntime.Bootstrap.dll` 側にも `ShellExecuteExW` 参照があり、ランタイム同梱分の影響が残ります。
+- UX 維持のため現状は許容し、Required になった場合のみ削減を検討します。

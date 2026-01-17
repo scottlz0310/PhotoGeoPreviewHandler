@@ -5,8 +5,8 @@
 ## 公開状況
 
 - 公開済み: https://apps.microsoft.com/detail/9P0WNR54441B
-- 公開バージョン: v1.3.0
-- 次回リリース: v1.4.0（準備中）
+- 公開バージョン: v1.4.0
+- 次回リリース: v1.5.0（準備中）
 - Store ID: 9P0WNR54441B
 
 ## Partner Center 設定
