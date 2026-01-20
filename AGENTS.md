@@ -54,6 +54,7 @@
 ## セキュリティと設定の注意
 - ログは `%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log` に書き出し、起動時にリセットします。
 - Release ワークフローは `v1.2.0` のようなタグで `win-x64` 向け MSI を作成します。
+- バージョン更新のチェック項目は `docs/ReleaseChecklist.md` を参照します。
 
 ## 今回の作業ファイル
 - `tasks.md`: 次回リリースの作業内容を整理
