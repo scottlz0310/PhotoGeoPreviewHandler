@@ -4,15 +4,13 @@ This app requires the .NET Desktop Runtime to run. It is automatically provided 
 It targets Windows 10/11 and renders maps using WinUI 3 and Mapsui.","PhotoGeoExplorer は、GPS 情報（ジオタグ）を含む写真を地図上に表示し、撮影場所から写真を整理・探索できる Windows デスクトップアプリです。
 このアプリを実行するには .NET Desktop Runtime が必要です。Microsoft Store からのインストール時に自動的に提供されます。
 Windows 10/11 を対象とし、WinUI 3 と Mapsui で地図を描画します。"
-ReleaseNotes,3,テキスト,,"Release Notes (v1.5.0)
-- Faster folder loading with async thumbnails
-- EXIF GPS/date editing
-- Rectangle selection on map
-- File list tooltips","リリースノート（v1.5.0）
-- 非同期サムネイル生成でフォルダ読み込みを高速化
-- EXIF（GPS/撮影日時）の編集
-- 地図の矩形選択
-- ファイル一覧のツールチップ"
+ReleaseNotes,3,テキスト,,"Release Notes (v1.5.1)
+- Bug fixes for language switching and startup folder restore
+- Navigation fix when choosing folders from File Browser Move
+- Regression tests added for recent fixes","リリースノート（v1.5.1）
+- 言語切替と起動時フォルダ復元の不具合を修正
+- File Browser の Move でフォルダ選択時のナビゲーションを修正
+- 直近の不具合に対する回帰テストを追加"
 Title,4,テキスト,,PhotoGeoExplorer,PhotoGeoExplorer
 ShortTitle,5,テキスト,,Explore Photos on a Map,写真を地図で整理・探索
 SortTitle,6,テキスト,,,
@@ -21,10 +19,10 @@ ShortDescription,8,テキスト,,"Organize geotagged photos on a map, edit EXIF 
 DevStudio,9,テキスト,,,
 CopyrightTrademarkInformation,12,テキスト,,,
 AdditionalLicenseTerms,13,テキスト,,,
-DesktopScreenshot1,100,相対パス (またはパートナー センターにあるファイルへの URL),,https://developer.microsoft.com/en-us/dashboard/apps/9P0WNR54441B/submissions/1152921505700409674/listings/1152922700023391143/listingassets/3036529865526698531,https://developer.microsoft.com/en-us/dashboard/apps/9P0WNR54441B/submissions/1152921505700409674/listings/1152922700023391145/listingassets/3059110377706524836
-DesktopScreenshot2,101,相対パス (またはパートナー センターにあるファイルへの URL),,https://developer.microsoft.com/en-us/dashboard/apps/9P0WNR54441B/submissions/1152921505700409674/listings/1152922700023391143/listingassets/3012603195106338262,https://developer.microsoft.com/en-us/dashboard/apps/9P0WNR54441B/submissions/1152921505700409674/listings/1152922700023391145/listingassets/3005765492191873640
-DesktopScreenshot3,102,相対パス (またはパートナー センターにあるファイルへの URL),,,
-DesktopScreenshot4,103,相対パス (またはパートナー センターにあるファイルへの URL),,,
+DesktopScreenshot1,100,相対パス (またはパートナー センターにあるファイルへの URL),,propose/screenshot1.png,propose/screenshot1.png
+DesktopScreenshot2,101,相対パス (またはパートナー センターにあるファイルへの URL),,propose/screenshot2.png,propose/screenshot2.png
+DesktopScreenshot3,102,相対パス (またはパートナー センターにあるファイルへの URL),,propose/ImageShot.png,propose/ImageShot.png
+DesktopScreenshot4,103,相対パス (またはパートナー センターにあるファイルへの URL),,propose/PR-Pic.png,propose/PR-Pic.png
 DesktopScreenshot5,104,相対パス (またはパートナー センターにあるファイルへの URL),,,
 DesktopScreenshot6,105,相対パス (またはパートナー センターにあるファイルへの URL),,,
 DesktopScreenshot7,106,相対パス (またはパートナー センターにあるファイルへの URL),,,
@@ -301,12 +299,12 @@ SurfaceHubScreenshotCaption27,576,テキスト,,,
 SurfaceHubScreenshotCaption28,577,テキスト,,,
 SurfaceHubScreenshotCaption29,578,テキスト,,,
 SurfaceHubScreenshotCaption30,579,テキスト,,,
-StoreLogo720x1080,600,相対パス (またはパートナー センターにあるファイルへの URL),,,
-StoreLogo1080x1080,601,相対パス (またはパートナー センターにあるファイルへの URL),,,
-StoreLogo300x300,602,相対パス (またはパートナー センターにあるファイルへの URL),,,
-OverrideLogosForWin10,603,True/False,,FALSE,FALSE
-StoreLogoOverride150x150,604,相対パス (またはパートナー センターにあるファイルへの URL),,https://developer.microsoft.com/en-us/dashboard/apps/9P0WNR54441B/submissions/1152921505700409674/listings/1152922700023391143/listingassets/3062318914074060723,https://developer.microsoft.com/en-us/dashboard/apps/9P0WNR54441B/submissions/1152921505700409674/listings/1152922700023391145/listingassets/3027405229620931277
-StoreLogoOverride71x71,605,相対パス (またはパートナー センターにあるファイルへの URL),,https://developer.microsoft.com/en-us/dashboard/apps/9P0WNR54441B/submissions/1152921505700409674/listings/1152922700023391143/listingassets/3017241834041047814,https://developer.microsoft.com/en-us/dashboard/apps/9P0WNR54441B/submissions/1152921505700409674/listings/1152922700023391145/listingassets/3050289451384130082
+StoreLogo720x1080,600,相対パス (またはパートナー センターにあるファイルへの URL),,propose/PosterArt.png,propose/PosterArt.png
+StoreLogo1080x1080,601,相対パス (またはパートナー センターにあるファイルへの URL),,propose/Square.png,propose/Square.png
+StoreLogo300x300,602,相対パス (またはパートナー センターにあるファイルへの URL),,propose/AppTile300x300.png,propose/AppTile300x300.png
+OverrideLogosForWin10,603,True/False,,TRUE,TRUE
+StoreLogoOverride150x150,604,相対パス (またはパートナー センターにあるファイルへの URL),,propose/AppTile150x150.png,propose/AppTile150x150.png
+StoreLogoOverride71x71,605,相対パス (またはパートナー センターにあるファイルへの URL),,propose/AppTile71x71.png,propose/AppTile71x71.png
 PromoImage1920x1080,606,相対パス (またはパートナー センターにあるファイルへの URL),,,
 PromoImage2400x1200,607,相対パス (またはパートナー センターにあるファイルへの URL),,,
 XboxBrandedKeyArt584x800,608,相対パス (またはパートナー センターにあるファイルへの URL),,,
@@ -440,27 +438,4 @@ TrailerAudioDescription12,1081,相対パス (またはパートナー センタ�
 TrailerAudioDescription13,1082,相対パス (またはパートナー センターにあるファイルへの URL),,,
 TrailerAudioDescription14,1083,相対パス (またはパートナー センターにあるファイルへの URL),,,
 TrailerAudioDescription15,1084,相対パス (またはパートナー センターにあるファイルへの URL),,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
-,,,,,
 ,,,,,

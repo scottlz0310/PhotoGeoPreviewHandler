@@ -1,21 +1,23 @@
 # Windows アプリ認定キット (WACK) テスト結果
 
-最終更新: 2026-01-17 (v1.5.0 検証)
+最終更新: 2026-01-20 (v1.5.1 検証)
 
 ## テスト結果サマリー
 
 - 結果: 合格 (Required 0)
+- テスト総数: 24 (合格 23 / 失敗 1)
 - オプション: [88] ブロック済みの実行可能ファイル
 - アプリ名: PhotoGeoExplorer
-- バージョン: 1.5.0.0
-- 実行パッケージ: PhotoGeoExplorer_1.5.0.0_x64.msixbundle
+- バージョン: 1.5.1.0
+- 実行パッケージ: PhotoGeoExplorer_1.5.1.0_x64.msixbundle
+- レポート: wack\wack-report.xml
 
 ## 実施手順
 
 1. Store 向けパッケージ生成
    ```powershell
    dotnet publish .\PhotoGeoExplorer\PhotoGeoExplorer.csproj -c Release -p:Platform=x64 `
-     -p:WindowsPackageType=MSIX -p:GenerateAppxPackageOnBuild=true -p:AppxBundle=Never `
+     -p:WindowsPackageType=MSIX -p:GenerateAppxPackageOnBuild=true -p:AppxBundle=Always -p:AppxBundlePlatforms=x64 `
      -p:UapAppxPackageBuildMode=StoreUpload -p:AppxPackageSigningEnabled=false -p:AppxSymbolPackageEnabled=false
    ```
 2. WACK 実行

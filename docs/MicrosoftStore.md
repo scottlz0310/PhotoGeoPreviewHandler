@@ -5,8 +5,8 @@
 ## 公開状況
 
 - 公開済み: https://apps.microsoft.com/detail/9P0WNR54441B
-- 公開バージョン: v1.4.0
-- 次回リリース: v1.5.0（準備中）
+- 公開バージョン: v1.5.0
+- 次回リリース: v1.5.1（準備中）
 - Store ID: 9P0WNR54441B
 
 ## Partner Center 設定
@@ -66,6 +66,14 @@
   - [ ] 1920×1080 px（ヒーロー画像）
   - [ ] 2400×1200 px（機能グラフィック）
 
+#### listingData.csv インポート手順
+
+- 新規アセットを含む場合は「フォルダー単位のインポート」を使う（CSV単体では画像参照が失敗する）。
+- ルートフォルダー名を含む相対パスで記載する（例: `propose/screenshot1.png`）。
+- フォルダー直下に `listingData.csv` と画像を配置し、`propose` を丸ごと選択してアップロードする。
+- `listingData.csv` は UTF-8 (BOM あり) + CRLF で保存する（LF だと行が連結されて無効扱いになる）。
+- Excel で開いたまま再保存しない（改行やエンコーディングが崩れることがある）。
+
 ## アプリパッケージ
 
 ### Package.appxmanifest 設定
@@ -89,13 +97,13 @@
 
 ```powershell
 dotnet publish .\PhotoGeoExplorer\PhotoGeoExplorer.csproj -c Release -p:Platform=x64 `
-  -p:WindowsPackageType=MSIX -p:GenerateAppxPackageOnBuild=true -p:AppxBundle=Never `
+  -p:WindowsPackageType=MSIX -p:GenerateAppxPackageOnBuild=true -p:AppxBundle=Always -p:AppxBundlePlatforms=x64 `
   -p:UapAppxPackageBuildMode=StoreUpload -p:AppxPackageSigningEnabled=false -p:AppxSymbolPackageEnabled=false
 ```
 
 生成物（例）:
 
-- `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.4.0.0_x64.msixupload`
+- `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.5.1.0_x64_bundle.msixupload`
 
 補足:
 
@@ -106,7 +114,7 @@ dotnet publish .\PhotoGeoExplorer\PhotoGeoExplorer.csproj -c Release -p:Platform
 ローカルでインストールして動作確認する場合は、`*_Test` フォルダー配下の `*.msix` を利用します。
 署名付きテストパッケージの生成/導入は `wack/signed-test-package.md` の手順を参照します。
 
-- 例: `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.4.0.0_x64_Test\PhotoGeoExplorer_1.4.0.0_x64.msix`
+- 例: `PhotoGeoExplorer\AppPackages\PhotoGeoExplorer_1.5.1.0_Test\PhotoGeoExplorer_1.5.1.0_x64.msix`
 
 #### Windows App Certification Kit (WACK)
 
