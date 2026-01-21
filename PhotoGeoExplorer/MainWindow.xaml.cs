@@ -130,7 +130,12 @@ public sealed partial class MainWindow : Window, IDisposable
         await ApplyStartupFileActivationAsync().ConfigureAwait(true);
         await _viewModel.InitializeAsync().ConfigureAwait(true);
         await UpdateMapFromSelectionAsync().ConfigureAwait(true);
-        await ShowQuickStartIfNeededAsync().ConfigureAwait(true);
+
+        // XamlRoot が確定するまでワンテンポ遅らせてからダイアログを表示
+        DispatcherQueue.TryEnqueue(async () =>
+        {
+            await ShowQuickStartIfNeededAsync().ConfigureAwait(true);
+        });
     }
 
     private void EnsureWindowSize()
@@ -2756,6 +2761,11 @@ public sealed partial class MainWindow : Window, IDisposable
         string? defaultText,
         string placeholderText)
     {
+        if (!await EnsureXamlRootAsync().ConfigureAwait(true))
+        {
+            return null;
+        }
+
         var textBox = new TextBox
         {
             Text = defaultText ?? string.Empty,
@@ -2799,6 +2809,11 @@ public sealed partial class MainWindow : Window, IDisposable
         string message,
         string primaryButtonText)
     {
+        if (!await EnsureXamlRootAsync().ConfigureAwait(true))
+        {
+            return false;
+        }
+
         var dialog = new ContentDialog
         {
             Title = title,
@@ -2819,6 +2834,11 @@ public sealed partial class MainWindow : Window, IDisposable
 
     private async Task ShowMessageDialogAsync(string title, string message)
     {
+        if (!await EnsureXamlRootAsync().ConfigureAwait(true))
+        {
+            return;
+        }
+
         var dialog = new ContentDialog
         {
             Title = title,
@@ -2836,6 +2856,12 @@ public sealed partial class MainWindow : Window, IDisposable
 
     private async Task ShowHelpDialogAsync(string titleKey, string detailKey, bool includeQuickStartToggle = false)
     {
+        if (!await EnsureXamlRootAsync().ConfigureAwait(true))
+        {
+            AppLog.Info($"ShowHelpDialogAsync: XamlRoot unavailable after waiting, skipping dialog '{titleKey}'");
+            return;
+        }
+
         CheckBox? quickStartToggle = null;
         UIElement content = CreateHelpDialogContent(LocalizationService.GetString(detailKey));
         if (includeQuickStartToggle)
@@ -2870,6 +2896,60 @@ public sealed partial class MainWindow : Window, IDisposable
             _showQuickStartOnStartup = quickStartToggle.IsChecked ?? false;
             await SaveSettingsAsync().ConfigureAwait(true);
         }
+    }
+
+    /// <summary>
+    /// XamlRoot が利用可能になるまで待機します。
+    /// WinUI 3 では OnActivated 直後に XamlRoot が null になる環境があるため、
+    /// Loaded イベントまたは DispatcherQueue で待機してから ContentDialog を表示します。
+    /// </summary>
+    /// <returns>XamlRoot が利用可能になった場合は true、タイムアウトした場合は false。</returns>
+    private async Task<bool> EnsureXamlRootAsync()
+    {
+        const int maxWaitMs = 3000;
+        const int intervalMs = 50;
+
+        if (RootGrid.XamlRoot is not null)
+        {
+            return true;
+        }
+
+        AppLog.Info("EnsureXamlRootAsync: XamlRoot is null, waiting for it to become available...");
+
+        // RootGrid.Loaded を待つ（まだ Loaded されていない場合）
+        var tcs = new TaskCompletionSource<bool>();
+        void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            RootGrid.Loaded -= OnLoaded;
+            tcs.TrySetResult(true);
+        }
+
+        RootGrid.Loaded += OnLoaded;
+
+        // 既に Loaded 済みの場合や、イベントが発火しない場合に備えてポーリングも併用
+        var elapsed = 0;
+        while (RootGrid.XamlRoot is null && elapsed < maxWaitMs)
+        {
+            await Task.Delay(intervalMs).ConfigureAwait(true);
+            elapsed += intervalMs;
+
+            // Loaded イベントが発火していたら終了
+            if (tcs.Task.IsCompleted)
+            {
+                break;
+            }
+        }
+
+        RootGrid.Loaded -= OnLoaded;
+
+        if (RootGrid.XamlRoot is not null)
+        {
+            AppLog.Info($"EnsureXamlRootAsync: XamlRoot became available after {elapsed}ms.");
+            return true;
+        }
+
+        AppLog.Info($"EnsureXamlRootAsync: XamlRoot still null after {elapsed}ms, giving up.");
+        return false;
     }
 
     private static ScrollViewer CreateHelpDialogContent(string message)

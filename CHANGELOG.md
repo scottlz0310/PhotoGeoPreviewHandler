@@ -2,6 +2,15 @@
 
 このプロジェクトの主な変更点をここに記録します。
 
+## [1.5.3] - unreleased
+
+### 修正
+- Microsoft Store 版で一部の環境（国内メーカーPC等）において起動に失敗する問題を修正。
+  - Win32 API (`GetCurrentPackageFullName`) を使用した堅牢なパッケージ判定に変更。
+  - MSIX パッケージ環境では Windows App SDK Bootstrap を呼び出さないように修正。
+- ContentDialog 表示時に XamlRoot が未確定の場合にクラッシュする問題を修正。
+  - ウィンドウ初期化完了まで待機してからダイアログを表示するように改善。
+
 ## [1.5.2] - 2026-01-20
 
 ### 修正
