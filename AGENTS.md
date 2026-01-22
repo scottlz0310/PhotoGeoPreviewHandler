@@ -13,18 +13,24 @@
 - `docs/` は必須でないドキュメント置き場です。トップレベルのドキュメントは最小限にします。
 - `Archives/` は参照用素材の置き場です。本番成果物には含めません。
 
-## ビルド・テスト・開発コマンド
-- `dotnet restore PhotoGeoExplorer.sln` で NuGet を復元します。
-- `dotnet build PhotoGeoExplorer.sln -c Release -p:Platform=x64` で解析込みビルドを行います。
-- `dotnet run --project PhotoGeoExplorer/PhotoGeoExplorer.csproj -c Release -p:Platform=x64` でローカル実行します。
-- `dotnet format --verify-no-changes PhotoGeoExplorer.sln` でフォーマット確認（CI + lefthook）。
-- `lefthook install` で pre-commit/pre-push を有効化します。
+## ビルド・テスト・開発コマンド (Dev Workflow)
+- **通常ビルド**: `dotnet build PhotoGeoExplorer.sln -c Release -p:Platform=x64`
+- **ローカル実行**: `dotnet run --project PhotoGeoExplorer/PhotoGeoExplorer.csproj -c Release -p:Platform=x64`
+- **パッケージ作成・インストール (MSIX)**:
+  - `.\\scripts\\DevInstall.ps1 -Build` : ビルド、署名、インストールを一括実行
+  - `.\\scripts\\DevInstall.ps1` : 既存ビルドの再インストール・署名のみ
+  - `.\\scripts\\DevInstall.ps1 -Clean` : アンインストールとクリーンアップ
+- **WACK (Store審査) テスト**:
+  - `.\\scripts\\RunWackTests.ps1` : ローカルインストールパッケージに対してテスト実行
+- **テスト実行**: `dotnet test PhotoGeoExplorer.sln -c Release -p:Platform=x64`
+- **フォーマット**: `dotnet format PhotoGeoExplorer.sln`
 
 ## 開発時の確認サイクル
-- 実行中の `PhotoGeoExplorer` プロセスを終了する
-- `dotnet build PhotoGeoExplorer.sln -c Release -p:Platform=x64` でビルド確認
-- `dotnet run --project PhotoGeoExplorer/PhotoGeoExplorer.csproj -c Release -p:Platform=x64` で起動確認
-- `%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log` に失敗がないことを確認
+1. コード変更
+2. フォーマット＆ビルド確認: `dotnet format; dotnet build -c Release -p:Platform=x64`
+3. クイック動作確認: `dotnet run ...`
+4. 実機インストール確認 (リリース前): `.\\scripts\\DevInstall.ps1 -Build`
+5. `%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log` の確認
 
 ## コーディングスタイルと命名規則
 - C# は 4 スペースインデント。`MainWindow.xaml` と `*.cs` の既存ルールに合わせます。
@@ -53,8 +59,9 @@
 
 ## セキュリティと設定の注意
 - ログは `%LocalAppData%\\PhotoGeoExplorer\\Logs\\app.log` に書き出し、起動時にリセットします。
-- Release ワークフローは `v1.2.0` のようなタグで `win-x64` 向け MSI を作成します。
+- Release ワークフローは `v1.2.0` のようなタグで `win-x64` 向け MSIX Bundle (`.msixupload`) を作成します。
 - バージョン更新のチェック項目は `docs/ReleaseChecklist.md` を参照します。
+- MSI インストーラーによる配布は廃止されました（Store 配布へ移行）。
 
 ## 今回の作業ファイル
 - `tasks.md`: 次回リリースの作業内容を整理
