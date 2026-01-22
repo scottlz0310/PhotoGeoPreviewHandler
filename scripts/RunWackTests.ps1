@@ -20,6 +20,21 @@ param(
     [string]$OutputDir
 )
 
+# --- 0. Check for Administrator Privileges ---
+$currentPrincipal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "WACK requires Administrator privileges." -ForegroundColor Yellow
+    Write-Host "Relaunching as Administrator..." -ForegroundColor Cyan
+    
+    # Re-run this script as Admin. -NoExit keeps the window open so results can be read.
+    $argsList = "-NoProfile -ExecutionPolicy Bypass -NoExit -File `"$($MyInvocation.MyCommand.Path)`""
+    if ($TestProfile) { $argsList += " -TestProfile `"$TestProfile`"" }
+    if ($OutputDir) { $argsList += " -OutputDir `"$OutputDir`"" }
+    
+    Start-Process powershell -ArgumentList $argsList -Verb RunAs
+    exit
+}
+
 $ErrorActionPreference = 'Stop'
 $ScriptDir = $PSScriptRoot
 $ProjectRoot = Split-Path -Parent $ScriptDir
@@ -95,5 +110,15 @@ if (Test-Path $ReportXml) {
         Write-Host "All checks passed!" -ForegroundColor Green
     }
 } else {
-    Write-Error "Report file not found: $ReportXml"
+    # If report is missing, maybe WACK failed to start or crashed.
+    # Check if a partial report or error log exists in the default WACK folder?
+    # Usually valid reports are only generated on success/completion.
+    
+    Write-Error "Report file not found at: $ReportXml"
+    Write-Host "Possible causes:" -ForegroundColor Yellow
+    Write-Host "1. App installation failed (Check if the app is already installed with a different cert?)"
+    Write-Host "2. WACK crashed or was interrupted."
 }
+
+Write-Host "`nPress Enter to close..." -ForegroundColor Gray
+Read-Host
