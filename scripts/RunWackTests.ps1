@@ -89,20 +89,27 @@ $ReportXml = Join-Path $OutputDir "WACK-$Timestamp.xml"
 Write-Host "`nStarting WACK Test... (This may take several minutes)" -ForegroundColor Yellow
 Write-Host "Report will be saved to: $ReportXml" -ForegroundColor Gray
 
-# Reset WACK state to clear any previous failures/pending tasks
+# Reset WACK state
 Write-Host "Resetting WACK state..." -ForegroundColor Gray
 Start-Process -FilePath $AppCert -ArgumentList "reset" -Wait
 
-# Uninstall existing app to prevent installation conflicts during WACK test
-$pkgName = "scottlz0310.PhotoGeoExplorer"
-if (Get-AppxPackage $pkgName) {
-    Write-Host "Uninstalling existing package ($pkgName) to ensure clean test..." -ForegroundColor Yellow
-    Get-AppxPackage $pkgName | Remove-AppxPackage
+# Ensure App is Installed (Mode 1: Test Installed App)
+# Testing installed app is often more reliable for local signed packages than file-based test
+# which requires WACK to handle the installation (and sometimes fails with certs).
+$PkgName = "scottlz0310.PhotoGeoExplorer"
+$InstalledPkg = Get-AppxPackage $PkgName
+if (-not $InstalledPkg) {
+    Write-Host "App not installed. Installing for WACK test..." -ForegroundColor Yellow
+    Add-AppxPackage -Path $TargetPackage.FullName -ForceUpdateFromAnyVersion
+    $InstalledPkg = Get-AppxPackage $PkgName
+    if (-not $InstalledPkg) { throw "Failed to install app for testing." }
 }
 
+$PFN = $InstalledPkg.PackageFullName
+Write-Host "Testing Installed Package: $PFN" -ForegroundColor Cyan
+
 # Run WACK
-# Removed "-apptype calt" as it causes issues with MSIX on some WACK versions (WACK auto-detects)
-$Args = @("test", "-packagepath", $TargetPackage.FullName, "-reportoutputpath", $ReportXml)
+$Args = @("test", "-packagefullname", $PFN, "-reportoutputpath", $ReportXml)
 
 Write-Host "Executing command: $AppCert $Args" -ForegroundColor Gray
 $Process = Start-Process -FilePath $AppCert -ArgumentList $Args -PassThru -Wait
