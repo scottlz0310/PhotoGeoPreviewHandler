@@ -4,7 +4,7 @@
     Restored from previous working implementation (wack/run-wack.ps1).
 
 .DESCRIPTION
-    Automates the WACK test process using environment isolation to preventing TAEF logging errors.
+    Automates the WACK test process using environment isolation to prevent TAEF logging errors.
     1. Sets up temporary environment (TEMP, APPDATA, USERPROFILE) to isolate WACK.
     2. Finds the latest signed MSIX/Bundle.
     3. Executes WACK test (appcert.exe) pointing to the package file.
@@ -75,22 +75,24 @@ Write-Host "Using WACK: $AppCert" -ForegroundColor Gray
 
 # --- 3. Locate Target Package ---
 # Search order:
-# 1. BundleArtifacts/PhotoGeoExplorer_LocalDebug.msix (Created by DevInstall.ps1)
+# 1. AppPackages/LocalDebug_*/PhotoGeoExplorer_LocalDebug.msix (Created by DevInstall.ps1)
 # 2. AppPackages/**/*.msixbundle (VS Build)
 # 3. AppPackages/**/*.msix (VS Build)
 
-$BundleArtifactsDir = Join-Path $ProjectRoot 'BundleArtifacts'
 $AppPackagesDir = Join-Path $ProjectRoot 'PhotoGeoExplorer\AppPackages'
 
-$Candidate = Get-ChildItem -Path $BundleArtifactsDir -Filter "PhotoGeoExplorer_LocalDebug.msix" -ErrorAction SilentlyContinue | Select-Object -First 1
+# Priority 1: Signed LocalDebug package
+$Candidate = Get-ChildItem -Path $AppPackagesDir -Recurse -Filter "PhotoGeoExplorer_LocalDebug.msix" -ErrorAction SilentlyContinue | 
+             Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
+# Priority 2: Any recent bundle or msix
 if (-not $Candidate) {
     $Candidate = Get-ChildItem -Path $AppPackagesDir -Recurse -Include *.msixbundle, *.msix |
                  Sort-Object LastWriteTime -Descending | Select-Object -First 1
 }
 
 if (-not $Candidate) {
-    throw "No MSIX package found in '$BundleArtifactsDir' or '$AppPackagesDir'. Run 'scripts\DevInstall.ps1' first."
+    throw "No MSIX package found in '$AppPackagesDir'. Run 'scripts\DevInstall.ps1 -Build' first."
 }
 
 $PackagePath = $Candidate.FullName

@@ -28,16 +28,16 @@ $scriptDir = $PSScriptRoot
 $projectRoot = Split-Path -Parent $scriptDir
 $certDir = Join-Path $scriptDir 'certs'
 $workDir = Join-Path $scriptDir 'temp'
-$bundleArtifactsDir = Join-Path $projectRoot 'BundleArtifacts'
 $appPackagesDir = Join-Path $projectRoot 'PhotoGeoExplorer\AppPackages'
-$certSubject = "CN=PhotoGeoExplorer_LocalDebug"
+$certName = 'PhotoGeoExplorer_LocalDebug'
+$certSubject = "CN=PhotoGeoExplorer Local Debug"
 $pkgName = "scottlz0310.PhotoGeoExplorer"
 
 # --- Clean / Uninstall ---
 if ($Clean) {
     Write-Host "Cleaning up artifacts..." -ForegroundColor Yellow
     if (Test-Path $workDir) { Remove-Item -Recurse -Force $workDir }
-    if (Test-Path $bundleArtifactsDir) { Remove-Item -Recurse -Force $bundleArtifactsDir }
+    if (Test-Path $certDir) { Remove-Item -Recurse -Force $certDir }
 
     Write-Host "Uninstalling App ($pkgName)..." -ForegroundColor Yellow
     Get-AppxPackage $pkgName -ErrorAction SilentlyContinue | Remove-AppxPackage -ErrorAction SilentlyContinue
@@ -69,22 +69,8 @@ if ($Clean) {
     }
 
     Write-Host "Cleanup complete." -ForegroundColor Green
-    # If only clean was requested (and not build), exit.
-    # But usually clean is used combined with build or standalone.
-    # For now, let's treat -Clean as "Clean resources".
-    # If the user wants to Clean AND Build, they can pass -Clean -Build.
-
+    
     if (-not $Build) { exit }
-}
-$appPackagesDir = Join-Path $projectRoot 'PhotoGeoExplorer\AppPackages'
-$certName = 'PhotoGeoExplorer_LocalDebug'
-$certSubject = "CN=PhotoGeoExplorer Local Debug"
-
-# --- Clean ---
-if ($Clean) {
-    Write-Host "Cleaning up temp folders..." -ForegroundColor Cyan
-    if (Test-Path $workDir) { Remove-Item -Recurse -Force $workDir }
-    if (Test-Path $certDir) { Remove-Item -Recurse -Force $certDir }
 }
 
 # --- Build ---
