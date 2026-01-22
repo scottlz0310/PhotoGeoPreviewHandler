@@ -212,6 +212,7 @@ public sealed partial class MainWindow : Window, IDisposable
             return;
         }
 
+        // XamlRoot をローカル変数に格納（EnsureXamlRootAsync と使用の間に null になる可能性への防御）
         var xamlRoot = RootGrid.XamlRoot;
         if (xamlRoot is null)
         {
