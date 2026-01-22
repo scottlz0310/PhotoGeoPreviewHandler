@@ -139,12 +139,7 @@ public sealed partial class MainWindow : Window, IDisposable
         });
 
         // マルチモニターDPI変更を検出するために XamlRoot.Changed をサブスクライブ
-        if (RootGrid.XamlRoot is not null)
-        {
-            _lastRasterizationScale = RootGrid.XamlRoot.RasterizationScale;
-            RootGrid.XamlRoot.Changed += OnXamlRootChanged;
-            AppLog.Info($"Subscribed to XamlRoot.Changed. Initial RasterizationScale: {_lastRasterizationScale}");
-        }
+        await SubscribeToXamlRootChangedAsync().ConfigureAwait(true);
     }
 
     private void EnsureWindowSize()
@@ -206,6 +201,20 @@ public sealed partial class MainWindow : Window, IDisposable
         {
             AppLog.Error("Failed to set window icon.", ex);
         }
+    }
+
+    private async Task SubscribeToXamlRootChangedAsync()
+    {
+        // XamlRoot が利用可能になるまで待機してから XamlRoot.Changed をサブスクライブ
+        if (!await EnsureXamlRootAsync().ConfigureAwait(true))
+        {
+            AppLog.Error("Failed to subscribe to XamlRoot.Changed: XamlRoot is null.");
+            return;
+        }
+
+        _lastRasterizationScale = RootGrid.XamlRoot.RasterizationScale;
+        RootGrid.XamlRoot.Changed += OnXamlRootChanged;
+        AppLog.Info($"Subscribed to XamlRoot.Changed. Initial RasterizationScale: {_lastRasterizationScale}");
     }
 
     private Task InitializeMapAsync()
