@@ -44,7 +44,19 @@ Windows 10/11 を対象とし、WinUI 3 と Mapsui で地図を描画します�
 - Visual Studio 2026 (WinUI 3 ワークロード。IDE で使う場合は任意)
 - WebView2 Runtime
 
-## ビルド
+詳細は [Developer Guide](docs/DeveloperGuide.md) を参照してください。
+
+## 開発インストール (Local Dev Install)
+
+Store 提出用パッケージ相当をローカルでビルド・署名・インストールするには、以下のスクリプトを使用します（Windows SDK が必要です）。
+
+```powershell
+.\scripts\DevInstall.ps1 -Build
+```
+
+## ビルド (Core Build)
+
+コマンドラインでの単純ビルド:
 
 ```powershell
 dotnet restore PhotoGeoExplorer.sln
@@ -92,11 +104,8 @@ Microsoft Store 版は公開済みです: https://apps.microsoft.com/detail/9P0W
 
 ## MSI インストール
 
-配布済み MSI を実行してインストールしてください。
-
-```powershell
-msiexec /i PhotoGeoExplorer.msi
-```
+MSI インストーラーによる配布は v1.5.1 で終了しました。
+以降は Microsoft Store または上記の手順でインストールしてください。
 
 ## MSIX (試験的)
 
