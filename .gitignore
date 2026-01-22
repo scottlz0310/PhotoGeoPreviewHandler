@@ -115,3 +115,8 @@ wack/logs/
 wack/profile/
 wack/temp/
 wack/certs/
+
+# Scripts
+scripts/temp/
+scripts/certs/
+

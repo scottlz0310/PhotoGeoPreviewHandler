@@ -85,10 +85,14 @@ if (-not (Test-Path $pfxPath)) {
         -NotAfter (Get-Date).AddYears(1)
 
     Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $securePassword | Out-Null
-    Export-Certificate -Cert $cert -FilePath $cerPath | Out-Null
 } else {
     Write-Host "Using existing certificate: $pfxPath" -ForegroundColor Green
 }
+
+# Ensure CER matches PFX
+$certObj = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $pfxPath, "password"
+$bytes = $certObj.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert)
+[System.IO.File]::WriteAllBytes($cerPath, $bytes)
 
 # Import PFX to CurrentUser\My so SignTool can use it
 $imported = Import-PfxCertificate -FilePath $pfxPath -Password $securePassword -CertStoreLocation 'Cert:\CurrentUser\My'
@@ -154,8 +158,40 @@ Write-Host "Signing..." -ForegroundColor Gray
 if ($LASTEXITCODE -ne 0) { throw "SignTool failed" }
 
 # --- Install ---
-Write-Host "Installing Certificate to TrustedPeople..." -ForegroundColor Cyan
+Write-Host "Installing Certificate..." -ForegroundColor Cyan
+
+# 1. CurrentUser\TrustedPeople (Basic requirement)
 Import-Certificate -FilePath $cerPath -CertStoreLocation 'Cert:\CurrentUser\TrustedPeople' -ErrorAction SilentlyContinue | Out-Null
+
+# 2. LocalMachine\TrustedPeople (Required for runFullTrust apps on many systems)
+# Check if running as Admin
+$currentPrincipal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+$isAdmin = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+if ($isAdmin) {
+    Write-Host "Running as Admin: Importing to LocalMachine\TrustedPeople..." -ForegroundColor Cyan
+    Import-Certificate -FilePath $cerPath -CertStoreLocation 'Cert:\LocalMachine\TrustedPeople' | Out-Null
+    Write-Host "Imported to LocalMachine." -ForegroundColor Green
+} else {
+    # Check if already exists in Machine store
+    $machineCert = Get-ChildItem 'Cert:\LocalMachine\TrustedPeople' -ErrorAction SilentlyContinue | Where-Object { $_.Thumbprint -eq $thumbprint }
+
+    if (-not $machineCert) {
+        Write-Host "Certificate missing from LocalMachine Store (Required for runFullTrust)." -ForegroundColor Yellow
+        Write-Host "Launching Admin prompt to install certificate... Please click 'Yes' on UAC." -ForegroundColor Yellow
+
+        $installCmd = "Import-Certificate -FilePath '$cerPath' -CertStoreLocation 'Cert:\LocalMachine\TrustedPeople'"
+        $proc = Start-Process powershell -ArgumentList "-NoProfile -Command $installCmd" -Verb RunAs -PassThru -Wait
+
+        if ($proc.ExitCode -eq 0) {
+            Write-Host "Successfully imported to LocalMachine." -ForegroundColor Green
+        } else {
+            Write-Warning "Failed to import to LocalMachine. Installation may fail with 0x800B0109."
+        }
+    } else {
+        Write-Host "Certificate already present in LocalMachine." -ForegroundColor Green
+    }
+}
 
 Write-Host "Installing App..." -ForegroundColor Cyan
 # ForceUpdateFromAnyVersion allows installing over the Store version or previous debug versions
