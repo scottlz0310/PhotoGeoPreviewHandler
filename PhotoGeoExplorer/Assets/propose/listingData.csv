@@ -4,13 +4,7 @@ This app requires the .NET Desktop Runtime to run. It is automatically provided 
 It targets Windows 10/11 and renders maps using WinUI 3 and Mapsui.","PhotoGeoExplorer は、GPS 情報（ジオタグ）を含む写真を地図上に表示し、撮影場所から写真を整理・探索できる Windows デスクトップアプリです。
 このアプリを実行するには .NET Desktop Runtime が必要です。Microsoft Store からのインストール時に自動的に提供されます。
 Windows 10/11 を対象とし、WinUI 3 と Mapsui で地図を描画します。"
-ReleaseNotes,3,テキスト,,"Release Notes (v1.5.1)
-- Bug fixes for language switching and startup folder restore
-- Navigation fix when choosing folders from File Browser Move
-- Regression tests added for recent fixes","リリースノート（v1.5.1）
-- 言語切替と起動時フォルダ復元の不具合を修正
-- File Browser の Move でフォルダ選択時のナビゲーションを修正
-- 直近の不具合に対する回帰テストを追加"
+ReleaseNotes,3,テキスト,,"Release Notes (v1.5.5)&#x0D;&#x0A;- File list now uses Windows Explorer-style natural sort order (1, 2, 3, 11 instead of 1, 11, 2, 3)&#x0D;&#x0A;- Fixed image preview scaling issue when moving windows across monitors with different DPI","リリースノート（v1.5.5）&#x0D;&#x0A;- ファイル一覧のソート順を Windows Explorer 準拠の自然順ソートに変更（1, 2, 3, 11 の順に並ぶように）&#x0D;&#x0A;- マルチモニター環境で異なる DPI のモニター間でウィンドウを移動した際のプレビュー拡大問題を修正"
 Title,4,テキスト,,PhotoGeoExplorer,PhotoGeoExplorer
 ShortTitle,5,テキスト,,Explore Photos on a Map,写真を地図で整理・探索
 SortTitle,6,テキスト,,,

@@ -2,7 +2,7 @@
 
 このプロジェクトの主な変更点をここに記録します。
 
-## [1.5.5] - Unreleased
+## [1.5.5] - 2026-01-23
 
 ### 変更
 - MSI インストーラープロジェクト (`PhotoGeoExplorer.Installer`) を削除し、配布形式を Microsoft Store (MSIX) に一本化。
