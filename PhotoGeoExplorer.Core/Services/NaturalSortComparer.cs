@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace PhotoGeoExplorer.Services;
@@ -46,6 +47,7 @@ internal sealed class NaturalSortComparer : IComparer<string?>
         }
 
         // Windows API を使用して自然順比較
+        // CA1401: Windows Explorer 準拠の自然順ソートを実現するため、Windows API (StrCmpLogicalW) の使用が必須
         return StrCmpLogicalW(x, y);
     }
 
@@ -57,7 +59,13 @@ internal sealed class NaturalSortComparer : IComparer<string?>
     /// <returns>
     /// psz1 が psz2 より小さい場合は負の値、等しい場合は 0、大きい場合は正の値。
     /// </returns>
+    /// <remarks>
+    /// Windows Explorer と同じソート順を実現するため、P/Invoke を使用しています。
+    /// マネージド コードでは Windows Explorer の動作を完全に再現できません。
+    /// </remarks>
     [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [SuppressMessage("Interoperability", "CA1401:P/Invokes should not be visible", Justification = "Windows Explorer 準拠の自然順ソートを実現するため、Windows API の使用が必須です。マネージド コードでは同等の動作を実現できません。")]
+    [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "LibraryImport は .NET 7+ の機能ですが、このプロジェクトでは従来の DllImport を使用します。")]
     private static extern int StrCmpLogicalW(string psz1, string psz2);
 }
