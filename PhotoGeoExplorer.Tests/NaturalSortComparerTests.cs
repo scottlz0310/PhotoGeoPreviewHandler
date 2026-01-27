@@ -61,9 +61,10 @@ public sealed class NaturalSortComparerTests
     public void CompareHandlesNullValues()
     {
         // Arrange & Act & Assert
+        // このテストは null ハンドリングの動作を検証するため、意図的に null を含む比較を行います
         Assert.Equal(0, NaturalSortComparer.Instance.Compare(null, null));
-        Assert.True(NaturalSortComparer.Instance.Compare(null, "a") < 0);
-        Assert.True(NaturalSortComparer.Instance.Compare("a", null) > 0);
+        Assert.Equal(-1, NaturalSortComparer.Instance.Compare(null, "a"));
+        Assert.Equal(1, NaturalSortComparer.Instance.Compare("a", null));
     }
 
     [Fact]
@@ -105,7 +106,10 @@ public sealed class NaturalSortComparerTests
         var sorted = input.OrderBy(x => x, NaturalSortComparer.Instance).ToArray();
 
         // Assert
-        // Windows StrCmpLogicalW は先頭ゼロの数が少ないものを優先（桁数でグループ化）
+        // Windows StrCmpLogicalW の仕様:
+        // 数値部分が同じ場合、先頭ゼロが多いほうが先に並ぶ（file001 < file01 < file1）
+        // 数値が異なる場合は数値順（file001 < file002）
+        // 参考: https://www.geoffchappell.com/studies/windows/shell/shlwapi/api/strings/strcmplogicalw.htm
         Assert.Equal(["file001", "file01", "file1", "file002"], sorted);
     }
 
