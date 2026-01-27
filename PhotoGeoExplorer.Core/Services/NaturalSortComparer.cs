@@ -64,7 +64,6 @@ internal sealed class NaturalSortComparer : IComparer<string?>
     /// </remarks>
     [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [SuppressMessage("Interoperability", "CA1401:P/Invokes should not be visible", Justification = "Windows Explorer 準拠の自然順ソートを実現するため、Windows API の使用が必須です。マネージド コードでは同等の動作を実現できません。")]
     [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "このプロジェクトでは従来の DllImport を使用する方針です。LibraryImport への移行は将来的な検討事項です。")]
     private static extern int StrCmpLogicalW(string psz1, string psz2);
 }

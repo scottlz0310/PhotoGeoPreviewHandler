@@ -61,13 +61,10 @@ public sealed class NaturalSortComparerTests
     public void CompareHandlesNullValues()
     {
         // Arrange & Act & Assert
-        // CA1508: コンパイル時に結果が確定する条件分岐を検出する警告
-        // このテストは null ハンドリングの動作を検証するため、意図的に null 同士を比較しています
-#pragma warning disable CA1508 // Avoid dead conditional code
+        // このテストは null ハンドリングの動作を検証するため、意図的に null を含む比較を行います
         Assert.Equal(0, NaturalSortComparer.Instance.Compare(null, null));
-#pragma warning restore CA1508 // Avoid dead conditional code
-        Assert.True(NaturalSortComparer.Instance.Compare(null, "a") < 0);
-        Assert.True(NaturalSortComparer.Instance.Compare("a", null) > 0);
+        Assert.Equal(-1, NaturalSortComparer.Instance.Compare(null, "a"));
+        Assert.Equal(1, NaturalSortComparer.Instance.Compare("a", null));
     }
 
     [Fact]
